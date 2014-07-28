@@ -12,6 +12,7 @@
             "pathOutputActiveHeader": "./src/test/resources/generated/normalized_header.txt"
         }
     },
+
     "bindings": [
         {
             "spi": "TransformationExecutor",

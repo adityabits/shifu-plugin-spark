@@ -1,3 +1,4 @@
+package ml.shifu.norm;
 import java.util.ArrayList;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;

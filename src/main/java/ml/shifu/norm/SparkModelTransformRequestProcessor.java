@@ -1,7 +1,9 @@
 package ml.shifu.norm;
 
 import org.apache.spark.SparkConf;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.JavaRDD;
 
 /*
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
@@ -26,6 +28,7 @@ import org.dmg.pmml.DerivedField;
 import org.dmg.pmml.FieldName;
 import org.dmg.pmml.Model;
 import org.dmg.pmml.PMML;
+import org.dmg.pmml.*;
 
 import java.io.PrintWriter;
 import java.util.List;
