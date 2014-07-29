@@ -1,3 +1,4 @@
+package ml.shifu.norm;
 import java.io.File;
 import org.testng.Assert;
 import org.testng.annotations.Test;

@@ -1,4 +1,5 @@
 package ml.shifu.norm;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,20 +16,16 @@ import org.dmg.pmml.PMML;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
-
-public class StaticFunctions {
-
-    public class Normalize implements Function<String, String> {
+public class Normalize implements Function<String, String> {
         /*
         DefaultTransformExecutor executor;
         Normalize(DefaultTransformExecutor executor) {
             this.executor= executor;
         }
         */
-
+		
         private Broadcast<PMML> bpmml;
         private Broadcast<DefaultTransformationExecutor> bexec;
-        private Broadcast<List<DataField>> dataFields;
 		private Broadcast<List<DataField>> bDataFields;
 		private Broadcast<List<DerivedField>> bActiveFields;
 		private Broadcast<List<DerivedField>> bTargetFields;
@@ -63,4 +60,4 @@ public class StaticFunctions {
             
         }
     }
-}
+

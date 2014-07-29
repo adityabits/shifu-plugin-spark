@@ -1,38 +1,28 @@
 package ml.shifu.norm;
 
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.commons.io.FileUtils;
+import org.dmg.pmml.*;
 
-/*
-import org.apache.spark.streaming.api.java.JavaStreamingContext;
-import org.apache.spark.streaming.StreamingContext;
-import org.apache.spark.streaming.*;
-import org.apache.spark.streaming.scheduler.StreamingListener;
-import org.apache.spark.streaming.scheduler.StreamingListenerBatchCompleted;
-import org.apache.spark.streaming.api.java.JavaDStream;
-*/
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.broadcast.Broadcast;
 
 import com.google.common.base.Joiner;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+
+import ml.shifu.core.di.builtin.transform.DefaultTransformationExecutor;
 import ml.shifu.core.di.module.SimpleModule;
 import ml.shifu.core.di.service.TransformationExecService;
-import ml.shifu.core.di.spi.SingleThreadFileLoader;
 import ml.shifu.core.di.spi.RequestProcessor;
 import ml.shifu.core.request.Request;
-import ml.shifu.core.util.CSVWithHeaderLocalSingleThreadFileLoader;
 import ml.shifu.core.util.PMMLUtils;
-import org.dmg.pmml.DerivedField;
-import org.dmg.pmml.FieldName;
-import org.dmg.pmml.Model;
-import org.dmg.pmml.PMML;
+import ml.shifu.core.util.Params;
 
-import java.io.PrintWriter;
+import java.io.File;
 import java.util.List;
 import java.util.Map;
-
-import ml.shifu.norm.StaticFunctions.Normalize;
-
 
 
 public class SparkModelTransformRequestProcessor implements RequestProcessor {
@@ -43,37 +33,50 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
 
         String pathPMML = (String) params.get("pathPMML", "model.xml");
 
+        // create splits of input file:
         PMML pmml = PMMLUtils.loadPMML(pathPMML);
-
         String pathOutputActiveHeader= params.get("pathOutputActiveHeader").toString();
         String pathInputData= params.get("pathInputData").toString();
         String pathOutputData= params.get("pathOutputData").toString();
+        String tmpInputSplitPath= params.get("pathTempData").toString() + "/input";
+        String tmpOutputSplitPath= params.get("pathTempData").toString() + "/output";
+        Integer nRecords= Integer.parseInt(params.get("nRecords").toString());
+        
+        MyFileUtils.splitInputFile(pathInputData, tmpInputSplitPath, nRecords);
+        
+        //Delete pathOutputData and tmpOutputSplitPath if they already exist
+        FileUtils.deleteDirectory(new File(pathOutputData));
+		FileUtils.deleteDirectory(new File(tmpOutputSplitPath));
+
         Model model= PMMLUtils.getModelByName(pmml, params.get("modelName").toString());
-        Map<FieldUsageType, List<DerivedField>> fieldMap= PMMLUtils.getDerievdFieldsByUsageType(pmml, model);
+        Map<FieldUsageType, List<DerivedField>> fieldMap= PMMLUtils.getDerivedFieldsByUsageType(pmml, model);
         List<DerivedField> activeFields= fieldMap.get(FieldUsageType.ACTIVE);
         List<DerivedField> targetFields= fieldMap.get(FieldUsageType.TARGET);
-
+        DefaultTransformationExecutor executor= new DefaultTransformationExecutor();
 
         SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("local");
-        //JavaStreamingContext jsc= new JavaStreamingContext(conf, new Duration(1000));
-        //JavaDStream<String> lines= jsc.textFileStream(pathInputData);
-
         JavaSparkContext jsc= new JavaSparkContext(conf);
-        JavaRDD<String> raw= jsc.textFile(pathInputData);
         
-        DefaultTransformExecutor executor= new DefaultTransformExecutor();
-        Broadcast<DefaultTransformExecutor> bexec= jsc.broadcast(executor);
+        Broadcast<DefaultTransformationExecutor> bexec= jsc.broadcast(executor);
         Broadcast<PMML> bpmml= jsc.broadcast(pmml);
         Broadcast<List<DataField>> bDataFields= jsc.broadcast(pmml.getDataDictionary().getDataFields());
         Broadcast<List<DerivedField>> bActiveFields= jsc.broadcast(activeFields);
-
-        JavaRDD<String> normalized= raw.map(new Normalize(bexec, bpmml, bDataFields, bActiveFields));
-
+        Broadcast<List<DerivedField>> bTargetFields= jsc.broadcast(targetFields);
+    	
+        JavaRDD<String> raw= jsc.textFile(pathInputData);
+    	JavaRDD<String> normalized= raw.map(new Normalize(bpmml, bexec, bDataFields, bActiveFields, bTargetFields));
+    	normalized.saveAsTextFile(pathOutputData);
+      
+    	/*
+    	String outputFile;
+        for(File inputFile: new File(tmpInputSplitPath).listFiles()) {
+        	JavaRDD<String> raw= jsc.textFile(inputFile.toString());
+        	JavaRDD<String> normalized= raw.map(new Normalize(bpmml, bexec, bDataFields, bActiveFields, bTargetFields));
+        	outputFile= tmpOutputSplitPath + "/" + inputFile.getName();
+        	normalized.saveAsTextFile(outputFile);
+        }
         
-
-
-
-
-
+        MyFileUtils.joinOutputFiles(tmpOutputSplitPath, pathOutputData);
+        */
     }
 }

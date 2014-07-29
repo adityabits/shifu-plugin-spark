@@ -78,6 +78,7 @@
 
     <build>
         <plugins>
+            <!-- 
             <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
@@ -107,7 +108,7 @@
                     </execution>
                 </executions>
             </plugin>
-
+			-->
             <!--
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
