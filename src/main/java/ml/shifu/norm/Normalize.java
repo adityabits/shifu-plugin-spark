@@ -17,12 +17,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
 public class Normalize implements Function<String, String> {
-        /*
-        DefaultTransformExecutor executor;
-        Normalize(DefaultTransformExecutor executor) {
-            this.executor= executor;
-        }
-        */
 		
         private Broadcast<PMML> bpmml;
         private Broadcast<DefaultTransformationExecutor> bexec;
@@ -56,7 +50,7 @@ public class Normalize implements Function<String, String> {
 
             List<Object> result= bexec.value().transform(bTargetFields.value(), rawDataMap);
             result.addAll(bexec.value().transform(bActiveFields.value(), rawDataMap));
-            return Joiner.on(",").join(result);
+            return Joiner.on(delimiter).join(result);
             
         }
     }

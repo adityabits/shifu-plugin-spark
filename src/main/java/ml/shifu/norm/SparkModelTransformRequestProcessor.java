@@ -23,34 +23,56 @@ import ml.shifu.core.di.spi.RequestProcessor;
 import ml.shifu.core.request.Request;
 import ml.shifu.core.util.PMMLUtils;
 import ml.shifu.core.util.Params;
+import ml.shifu.core.util.JSONUtils;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.lang.ProcessBuilder;
+import java.lang.Process;
 
 
 public class SparkModelTransformRequestProcessor implements RequestProcessor {
-    
+
+
     public void exec(Request req) throws Exception {
+        Params params= req.getProcessor().getParams();
+        String pathPMML= (String) params.get("pathPMML", "model.xml");
+        String pathRequest= (String) params.get("pathRequest", "request.xml");
+        String pathHDFSTmp= (String) params.get("pathHDFSTmp", "ml/shifu/norm/tmp");
+        String pathToJar= (String) params.get("pathToJar"); // default value?
+
+        // upload PMML xml file to HDFS and get its path
+        String pathOutputActiveHeader= params.get("pathOutputActiveHeader").toString();
+
+        String pathHDFSPmml= HDFSFileUtils.uploadToHDFS(pathPMML, pathHDFSTmp);
+        String pathHDFSRequest= HDFSFileUtils.uploadToHDFS(pathRequest, pathHDFSTmp);
+
+        // TODO: construct normalize header file
+
+        // call spark-submit
+        Process proc= new ProcessBuilder("$SPARK_HOME/bin/spark-submit", "--class", "ml.spark.norm.SparkSubmitter", pathToJar, pathHDFSRequest, pathHDFSPmml).start();
+        System.out.println("--------Submitted job");
+    }
+    
+    public void sparkExec(Request req, PMML pmml) throws Exception {
 
         Params params= req.getProcessor().getParams();
 
-        String pathPMML = (String) params.get("pathPMML", "model.xml");
-
-        // create splits of input file:
-        PMML pmml = PMMLUtils.loadPMML(pathPMML);
-        String pathOutputActiveHeader= params.get("pathOutputActiveHeader").toString();
         String pathInputData= params.get("pathInputData").toString();
         String pathOutputData= params.get("pathOutputData").toString();
-        String tmpInputSplitPath= params.get("pathTempData").toString() + "/input";
-        String tmpOutputSplitPath= params.get("pathTempData").toString() + "/output";
-        Integer nRecords= Integer.parseInt(params.get("nRecords").toString());
-        
-        MyFileUtils.splitInputFile(pathInputData, tmpInputSplitPath, nRecords);
+        String pathHDFSInput= HDFSFileUtils.uploadToHDFS(pathInputData, pathHDFSTmp);
+
+        //String pathPMML = (String) params.get("pathPMML", "model.xml");
+
+        // create splits of input file:
+        //PMML pmml = PMMLUtils.loadPMML(pathPMML);
+        //Integer nRecords= Integer.parseInt(params.get("nRecords").toString());
+        //MyFileUtils.splitInputFile(pathInputData, tmpInputSplitPath, nRecords);
         
         //Delete pathOutputData and tmpOutputSplitPath if they already exist
         FileUtils.deleteDirectory(new File(pathOutputData));
-		FileUtils.deleteDirectory(new File(tmpOutputSplitPath));
+		//FileUtils.deleteDirectory(new File(tmpOutputSplitPath));
 
         Model model= PMMLUtils.getModelByName(pmml, params.get("modelName").toString());
         Map<FieldUsageType, List<DerivedField>> fieldMap= PMMLUtils.getDerivedFieldsByUsageType(pmml, model);
@@ -58,7 +80,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         List<DerivedField> targetFields= fieldMap.get(FieldUsageType.TARGET);
         DefaultTransformationExecutor executor= new DefaultTransformationExecutor();
 
-        SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("local");
+        SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("yarn-cluster");
         JavaSparkContext jsc= new JavaSparkContext(conf);
         
         Broadcast<DefaultTransformationExecutor> bexec= jsc.broadcast(executor);
