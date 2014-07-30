@@ -1,22 +1,20 @@
 package ml.shifu.norm;
 
+import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-
-import org.apache.commons.io.FilenameUtils;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import org.apache.hadoop.fs.Path;
 
 
 public class HDFSFileUtils {
     
-    public static String uploadToHDFS(String localPath, String HDFSDir) {
-        FileSystem fs= new FileSystem(new Configuration());
-        String basename= Paths.get(localPath).getName().toString(); 
-        Path HDFSPath= Paths.get(HDFSDir + "/" + basename);
+    public static String uploadToHDFS(String localPath, String HDFSDir) throws IOException {
+        FileSystem fs= FileSystem.get(new Configuration());
+        String basename= new Path(localPath).getName().toString(); 
+        Path HDFSPath= new Path(HDFSDir + "/" + basename);
         // TODO: use a path joiner
-        fs.copyFromLocalFile(Paths.get(localPath), HDFSPath);
+        fs.copyFromLocalFile(new Path(localPath), HDFSPath);
         return HDFSPath.toString();
     }
 

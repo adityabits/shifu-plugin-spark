@@ -4,7 +4,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.conf.Configuration;
 import org.dmg.pmml.*;
-
 import org.jpmml.evaluator.ExpressionUtil;
 import org.jpmml.model.ImportFilter;
 import org.jpmml.model.JAXBUtil;
@@ -19,12 +18,15 @@ import ml.shifu.core.util.PMMLUtils;
 import ml.shifu.core.util.Params;
 import ml.shifu.core.util.JSONUtils;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
+import org.apache.hadoop.fs.Path;
+
+import javax.xml.transform.sax.SAXSource;
 
 public class SparkSubmitter {
-    public static void main(String[] args)
+    public static void main(String[] args) throws Exception
     {
         // argument 1: HDFS path to request.json
         // argument 2: HDFS path to PMML model.xml
@@ -32,22 +34,23 @@ public class SparkSubmitter {
         String pathPMML= args[1];
 
         FileSystem fs= FileSystem.get(new Configuration());
-        InputStream reqInputStream= fs.open(Paths.get(pathReq));
+        InputStream reqInputStream= fs.open(new Path(pathReq));
 
         // load PMML- include this method in PMMLUtils
         InputStream pmmlInputStream= null;
+        PMML pmml= null;
         try {
-            pmmlInputStream = fs.get(Paths.get(pathPMML));
+            pmmlInputStream = fs.open(new Path(pathPMML));
             InputSource source = new InputSource(pmmlInputStream);
             SAXSource transformedSource = ImportFilter.apply(source);
-            PMML pmml=  JAXBUtil.unmarshalPMML(transformedSource);
+            pmml=  JAXBUtil.unmarshalPMML(transformedSource);
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
         }
 
         SparkModelTransformRequestProcessor strp= new SparkModelTransformRequestProcessor();
-        Request req=  JSONUtils.readValue(fs.open(Paths.get(pathReq)), Request.class); 
+        Request req=  JSONUtils.readValue(fs.open(new Path(pathReq)), Request.class); 
         strp.sparkExec(req, pmml);
     }
 

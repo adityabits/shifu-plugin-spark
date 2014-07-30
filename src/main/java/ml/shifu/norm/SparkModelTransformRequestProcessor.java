@@ -42,7 +42,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         String pathHDFSTmp= (String) params.get("pathHDFSTmp", "ml/shifu/norm/tmp");
         String pathToJar= (String) params.get("pathToJar"); // default value?
 
-        // upload PMML xml file to HDFS and get its path
+        // upload PMML XML file to HDFS and get its path
         String pathOutputActiveHeader= params.get("pathOutputActiveHeader").toString();
 
         String pathHDFSPmml= HDFSFileUtils.uploadToHDFS(pathPMML, pathHDFSTmp);
@@ -61,6 +61,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
 
         String pathInputData= params.get("pathInputData").toString();
         String pathOutputData= params.get("pathOutputData").toString();
+        String pathHDFSTmp= (String) params.get("pathHDFSTmp", "ml/shifu/norm/tmp");
         String pathHDFSInput= HDFSFileUtils.uploadToHDFS(pathInputData, pathHDFSTmp);
 
         //String pathPMML = (String) params.get("pathPMML", "model.xml");
@@ -89,7 +90,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         Broadcast<List<DerivedField>> bActiveFields= jsc.broadcast(activeFields);
         Broadcast<List<DerivedField>> bTargetFields= jsc.broadcast(targetFields);
     	
-        JavaRDD<String> raw= jsc.textFile(pathInputData);
+        JavaRDD<String> raw= jsc.textFile(pathHDFSInput);
     	JavaRDD<String> normalized= raw.map(new Normalize(bpmml, bexec, bDataFields, bActiveFields, bTargetFields));
     	normalized.saveAsTextFile(pathOutputData);
       
