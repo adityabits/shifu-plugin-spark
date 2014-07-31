@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.lang.ProcessBuilder;
+import java.lang.ProcessBuilder.Redirect;
 import java.lang.Process;
 
 
@@ -41,17 +42,25 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         String pathRequest= (String) params.get("pathRequest", "request.xml");
         String pathHDFSTmp= (String) params.get("pathHDFSTmp", "ml/shifu/norm/tmp");
         String pathToJar= (String) params.get("pathToJar"); // default value?
+        String HdfsUri= (String)params.get("HdfsUri", "hdfs://localhost:9000");
 
         // upload PMML XML file to HDFS and get its path
         String pathOutputActiveHeader= params.get("pathOutputActiveHeader").toString();
 
-        String pathHDFSPmml= HDFSFileUtils.uploadToHDFS(pathPMML, pathHDFSTmp);
-        String pathHDFSRequest= HDFSFileUtils.uploadToHDFS(pathRequest, pathHDFSTmp);
+        String pathHDFSPmml= HDFSFileUtils.uploadToHDFS(HdfsUri, pathPMML, pathHDFSTmp);
+        String pathHDFSRequest= HDFSFileUtils.uploadToHDFS(HdfsUri, pathRequest, pathHDFSTmp);
 
         // TODO: construct normalize header file
 
         // call spark-submit
-        Process proc= new ProcessBuilder("$SPARK_HOME/bin/spark-submit", "--class", "ml.spark.norm.SparkSubmitter", pathToJar, pathHDFSRequest, pathHDFSPmml).start();
+        String Spark_submit= (String) params.get("SparkHome") + "/bin/spark-submit";
+        System.out.println( Spark_submit);
+        ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.norm.SparkSubmitter", pathToJar, pathHDFSRequest, pathHDFSPmml);
+        procBuilder.redirectErrorStream(true);
+        File outputFile= new File("log");
+        procBuilder.redirectOutput(Redirect.appendTo(outputFile));
+        Process proc= procBuilder.start(); 
+        proc.waitFor();
         System.out.println("--------Submitted job");
     }
     
@@ -62,7 +71,8 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         String pathInputData= params.get("pathInputData").toString();
         String pathOutputData= params.get("pathOutputData").toString();
         String pathHDFSTmp= (String) params.get("pathHDFSTmp", "ml/shifu/norm/tmp");
-        String pathHDFSInput= HDFSFileUtils.uploadToHDFS(pathInputData, pathHDFSTmp);
+        String HdfsUri= (String) params.get("HdfsUri", "hdfs://localhost:9000");
+        String pathHDFSInput= HDFSFileUtils.uploadToHDFS(HdfsUri, pathInputData, pathHDFSTmp);
 
         //String pathPMML = (String) params.get("pathPMML", "model.xml");
 
@@ -81,7 +91,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         List<DerivedField> targetFields= fieldMap.get(FieldUsageType.TARGET);
         DefaultTransformationExecutor executor= new DefaultTransformationExecutor();
 
-        SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("yarn-cluster");
+        SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("yarn-client");
         JavaSparkContext jsc= new JavaSparkContext(conf);
         
         Broadcast<DefaultTransformationExecutor> bexec= jsc.broadcast(executor);
