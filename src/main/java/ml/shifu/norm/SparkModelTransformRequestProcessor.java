@@ -89,12 +89,12 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         Map<FieldUsageType, List<DerivedField>> fieldMap= PMMLUtils.getDerivedFieldsByUsageType(pmml, model);
         List<DerivedField> activeFields= fieldMap.get(FieldUsageType.ACTIVE);
         List<DerivedField> targetFields= fieldMap.get(FieldUsageType.TARGET);
-        DefaultTransformationExecutor executor= new DefaultTransformationExecutor();
+        SerializedDefaultTransformationExecutor executor= new SerializedDefaultTransformationExecutor();
 
         SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("yarn-client");
         JavaSparkContext jsc= new JavaSparkContext(conf);
         
-        Broadcast<DefaultTransformationExecutor> bexec= jsc.broadcast(executor);
+        Broadcast<SerializedDefaultTransformationExecutor> bexec= jsc.broadcast(executor);
         Broadcast<PMML> bpmml= jsc.broadcast(pmml);
         Broadcast<List<DataField>> bDataFields= jsc.broadcast(pmml.getDataDictionary().getDataFields());
         Broadcast<List<DerivedField>> bActiveFields= jsc.broadcast(activeFields);
