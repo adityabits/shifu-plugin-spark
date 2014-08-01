@@ -17,24 +17,31 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
 public class Normalize implements Function<String, String> {
-		
+		/*
         private Broadcast<PMML> bpmml;
-        private Broadcast<SerializableDefaultTransformationExecutor> bexec;
+        private Broadcast<DefaultTransformationExecutor> bexec;
 		private Broadcast<List<DataField>> bDataFields;
 		private Broadcast<List<DerivedField>> bActiveFields;
 		private Broadcast<List<DerivedField>> bTargetFields;
-		private String delimiter= ",";
-
-        Normalize(Broadcast<PMML> bpmml, Broadcast<SerializableDefaultTransformationExecutor> bexec, Broadcast<List<DataField>> bDataFields, Broadcast<List<DerivedField>> bActiveFields, Broadcast<List<DerivedField>> bTargetFields) {
+		
+        Normalize(Broadcast<PMML> bpmml, Broadcast<DefaultTransformationExecutor> bexec, Broadcast<List<DataField>> bDataFields, Broadcast<List<DerivedField>> bActiveFields, Broadcast<List<DerivedField>> bTargetFields) {
             this.bpmml= bpmml;
             this.bexec= bexec;
             this.bDataFields= bDataFields;
             this.bActiveFields= bActiveFields;
             this.bTargetFields= bTargetFields;
         }
+		*/
+		private BroadcastVariables bVar;
+		private String delimiter= ",";
+ 
+        public Normalize(BroadcastVariables bVar) {
+			// TODO Auto-generated constructor stub
+        	this.bVar= bVar;
+		}
 
-         
-        @Override
+
+		@Override
         public String call(String input) {
             List<Object> parsedInput= new ArrayList<Object>();
             
@@ -45,11 +52,11 @@ public class Normalize implements Function<String, String> {
 
             Map<String, Object> rawDataMap= new HashMap<String, Object>();
             for(int i=0; i < parsedInput.size(); i++) {
-                rawDataMap.put(bDataFields.value().get(i).getName().getValue(), parsedInput.get(i));
+                rawDataMap.put(bVar.getDataFields().get(i).getName().getValue(), parsedInput.get(i));
             }
 
-            List<Object> result= bexec.value().transform(bTargetFields.value(), rawDataMap);
-            result.addAll(bexec.value().transform(bActiveFields.value(), rawDataMap));
+            List<Object> result= bVar.getExec().transform(bVar.getTargetFields(), rawDataMap);
+            result.addAll(bVar.getExec().transform(bVar.getActiveFields(), rawDataMap));
             return Joiner.on(delimiter).join(result);
             
         }
