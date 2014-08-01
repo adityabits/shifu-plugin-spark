@@ -19,6 +19,7 @@ public class MyRegistrator implements KryoRegistrator {
 		kryo.register(DataField.class);
 		kryo.register(PMML.class);
 		kryo.register(DerivedField.class);
+		kryo.register(BroadcastVariables.class);
 	}
 
 }
