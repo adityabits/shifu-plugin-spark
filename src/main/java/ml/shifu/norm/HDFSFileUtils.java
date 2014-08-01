@@ -14,7 +14,7 @@ public class HDFSFileUtils {
         FileSystem fs= FileSystem.get(new URI(HdfsUri), new Configuration());
         String basename= new Path(localPath).getName().toString(); 
         Path HDFSPath= new Path(HDFSDir + "/" + basename);
-        // TODO: use a path joiner
+        // TODO: use a path joiner (?)
         fs.copyFromLocalFile(new Path(localPath), HDFSPath);
         return HDFSPath.toString();
     }
