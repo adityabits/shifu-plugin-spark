@@ -42,8 +42,19 @@ public class SparkSubmitter {
         String pathPMML= args[1];
 
         FileSystem fs= FileSystem.get(new Configuration());
-        InputStream reqInputStream= fs.open(new Path(pathReq));
-        PMML pmml= CombinedUtils.loadPMML(pathPMML, fs);
+
+		InputStream pmmlInputStream= null;
+		PMML pmml= null;
+		try {
+		    pmmlInputStream = fs.open(new Path(pathPMML));
+		    InputSource source = new InputSource(pmmlInputStream);
+		    SAXSource transformedSource = ImportFilter.apply(source);
+		    pmml=  JAXBUtil.unmarshalPMML(transformedSource);
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}
+
+        //PMML pmml= CombinedUtils.loadPMML(pathPMML, fs);
         
 
         SparkModelTransformRequestProcessor strp= new SparkModelTransformRequestProcessor();
