@@ -49,15 +49,15 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         // upload PMML XML file to HDFS and get its path
         String pathOutputActiveHeader= params.get("pathOutputActiveHeader").toString();
 
-        String pathHDFSPmml= HDFSFileUtils.uploadToHDFS(HdfsUri, pathPMML, pathHDFSTmp);
-        String pathHDFSRequest= HDFSFileUtils.uploadToHDFS(HdfsUri, pathRequest, pathHDFSTmp);
+        //String pathHDFSPmml= HDFSFileUtils.uploadToHDFS(HdfsUri, pathPMML, pathHDFSTmp);
+        //String pathHDFSRequest= HDFSFileUtils.uploadToHDFS(HdfsUri, pathRequest, pathHDFSTmp);
 
         // TODO: construct normalize header file
 
         // call spark-submit
         String Spark_submit= (String) params.get("SparkHome") + "/bin/spark-submit";
         System.out.println( Spark_submit);
-        ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.norm.SparkSubmitter", pathToJar, pathHDFSRequest, pathHDFSPmml);
+        ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.norm.SparkSubmitter", pathToJar, pathHDFSPmml, pathHDFSRequest);
         procBuilder.redirectErrorStream(true);
         File outputFile= new File("log");
         procBuilder.redirectOutput(Redirect.appendTo(outputFile));
