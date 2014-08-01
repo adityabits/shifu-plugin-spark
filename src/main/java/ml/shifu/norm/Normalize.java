@@ -19,15 +19,15 @@ import com.google.common.base.Splitter;
 public class Normalize implements Function<String, String> {
 		
         private Broadcast<PMML> bpmml;
-        private Broadcast<SerializedDefaultTransformationExecutor> bexec;
+        private Broadcast<SerializableDefaultTransformationExecutor> bexec;
 		private Broadcast<List<DataField>> bDataFields;
 		private Broadcast<List<DerivedField>> bActiveFields;
 		private Broadcast<List<DerivedField>> bTargetFields;
 		private String delimiter= ",";
 
-        Normalize(Broadcast<PMML> bpmml, Broadcast<SerializedDefaultTransformationExecutor> bexec2, Broadcast<List<DataField>> bDataFields, Broadcast<List<DerivedField>> bActiveFields, Broadcast<List<DerivedField>> bTargetFields) {
+        Normalize(Broadcast<PMML> bpmml, Broadcast<SerializableDefaultTransformationExecutor> bexec, Broadcast<List<DataField>> bDataFields, Broadcast<List<DerivedField>> bActiveFields, Broadcast<List<DerivedField>> bTargetFields) {
             this.bpmml= bpmml;
-            this.bexec= bexec2;
+            this.bexec= bexec;
             this.bDataFields= bDataFields;
             this.bActiveFields= bActiveFields;
             this.bTargetFields= bTargetFields;

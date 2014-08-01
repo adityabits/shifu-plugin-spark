@@ -4,10 +4,10 @@ import java.io.Serializable;
 
 import ml.shifu.core.di.builtin.transform.DefaultTransformationExecutor;
 
-public class SerializedDefaultTransformationExecutor extends
+public class SerializableDefaultTransformationExecutor extends
 		DefaultTransformationExecutor implements Serializable {
 
-	public SerializedDefaultTransformationExecutor() {
+	public SerializableDefaultTransformationExecutor() {
 		// TODO Auto-generated constructor stub
 	}
 

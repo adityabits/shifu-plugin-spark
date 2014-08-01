@@ -2,7 +2,6 @@ package ml.shifu.norm;
 
 import org.apache.commons.io.FileUtils;
 import org.dmg.pmml.*;
-
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -10,7 +9,6 @@ import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.JavaRDD;
-
 
 import com.google.common.base.Joiner;
 import com.google.inject.Guice;
@@ -24,6 +22,10 @@ import ml.shifu.core.request.Request;
 import ml.shifu.core.util.PMMLUtils;
 import ml.shifu.core.util.Params;
 import ml.shifu.core.util.JSONUtils;
+
+import com.esotericsoftware.kryo.Kryo;
+
+import org.apache.spark.serializer.KryoRegistrator;
 
 import java.io.File;
 import java.util.List;
@@ -89,12 +91,14 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         Map<FieldUsageType, List<DerivedField>> fieldMap= PMMLUtils.getDerivedFieldsByUsageType(pmml, model);
         List<DerivedField> activeFields= fieldMap.get(FieldUsageType.ACTIVE);
         List<DerivedField> targetFields= fieldMap.get(FieldUsageType.TARGET);
-        SerializedDefaultTransformationExecutor executor= new SerializedDefaultTransformationExecutor();
+        SerializableDefaultTransformationExecutor executor= new SerializableDefaultTransformationExecutor();
 
         SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("yarn-client");
+        conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+        conf.set("spark.kyro.Registrator", "ml.shifu.norm.MyRegistrator");
         JavaSparkContext jsc= new JavaSparkContext(conf);
         
-        Broadcast<SerializedDefaultTransformationExecutor> bexec= jsc.broadcast(executor);
+        Broadcast<SerializableDefaultTransformationExecutor> bexec= jsc.broadcast(executor);
         Broadcast<PMML> bpmml= jsc.broadcast(pmml);
         Broadcast<List<DataField>> bDataFields= jsc.broadcast(pmml.getDataDictionary().getDataFields());
         Broadcast<List<DerivedField>> bActiveFields= jsc.broadcast(activeFields);
