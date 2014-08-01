@@ -42,22 +42,8 @@ public class SparkSubmitter {
         String pathPMML= args[1];
 
         FileSystem fs= FileSystem.get(new Configuration());
+        PMML pmml= CombinedUtils.loadPMML(pathPMML, fs);        
 
-		InputStream pmmlInputStream= null;
-		PMML pmml= null;
-		try {
-		    pmmlInputStream = fs.open(new Path(pathPMML));
-		    InputSource source = new InputSource(pmmlInputStream);
-		    SAXSource transformedSource = ImportFilter.apply(source);
-		    pmml=  JAXBUtil.unmarshalPMML(transformedSource);
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
-
-        //PMML pmml= CombinedUtils.loadPMML(pathPMML, fs);
-        
-
-        SparkModelTransformRequestProcessor strp= new SparkModelTransformRequestProcessor();
         Request req=  JSONUtils.readValue(fs.open(new Path(pathReq)), Request.class); 
         
         Params params= req.getProcessor().getParams();
@@ -80,15 +66,14 @@ public class SparkSubmitter {
 		//FileUtils.deleteDirectory(new File(tmpOutputSplitPath));
 
         Model model= PMMLUtils.getModelByName(pmml, params.get("modelName").toString());
-        Map<FieldUsageType, List<DerivedField>> fieldMap= PMMLUtils.getDerivedFieldsByUsageType(pmml, model);
-        List<DerivedField> activeFields= fieldMap.get(FieldUsageType.ACTIVE);
-        List<DerivedField> targetFields= fieldMap.get(FieldUsageType.TARGET);
         DefaultTransformationExecutor executor= new DefaultTransformationExecutor();
 
         SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("yarn-client");
         conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         conf.set("spark.kyro.Registrator", "ml.shifu.norm.MyRegistrator");
         JavaSparkContext jsc= new JavaSparkContext(conf);
+        List<DerivedField> activeFields= CombinedUtils.getActiveFields(pmml, params);
+        List<DerivedField> targetFields= CombinedUtils.getActiveFields(pmml, params);
         
         /*
         Broadcast<DefaultTransformationExecutor> bexec= jsc.broadcast(executor);

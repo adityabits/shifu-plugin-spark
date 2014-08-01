@@ -34,7 +34,10 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
 
         // upload PMML XML file to HDFS and get its path
         String pathOutputActiveHeader= params.get("pathOutputActiveHeader").toString();
-
+        PMML pmml= PMMLUtils.loadPMML(pathPMML);
+        List<DerivedField> activeFields= CombinedUtils.getActiveFields(pmml, params);
+        List<DerivedField> targetFields= CombinedUtils.getTargetFields(pmml, params);        
+        CombinedUtils.writeTransformationHeader(pathOutputActiveHeader, activeFields, targetFields);
         String pathHDFSPmml= HDFSFileUtils.uploadToHDFS(HdfsUri, pathPMML, pathHDFSTmp);
         String pathHDFSRequest= HDFSFileUtils.uploadToHDFS(HdfsUri, pathRequest, pathHDFSTmp);
 
