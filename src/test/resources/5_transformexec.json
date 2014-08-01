@@ -14,7 +14,7 @@
             "pathOutputActiveHeader": "./src/test/resources/generated/normalized_header.txt",
             "_nRecords": "50",
             "pathToJar": "/home/stack/workspace/spark-norm/target/spark-norm-0.3.0-SNAPSHOT-jar-with-dependencies.jar",
-            "pathRequest": "/home/stack/workspace/spark-norm/src/test/resources/5_transformexec.json",
+            "pathRequest": "file:///home/stack/workspace/spark-norm/src/test/resources/5_transformexec.json",
             "HdfsUri": "hdfs://localhost:9000", 
             "SparkHome": "/home/stack/spark-1.0.0-bin-hadoop2"
 
