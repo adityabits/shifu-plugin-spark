@@ -12,39 +12,39 @@ import ml.shifu.core.di.builtin.transform.DefaultTransformationExecutor;
 
 public class BroadcastVariables {
 
-	private Broadcast<DefaultTransformationExecutor> exec;
-	private Broadcast<PMML> pmml;
-	private Broadcast<List<DataField>> dataFields;
-	private Broadcast<List<DerivedField>> activeFields;
-	private Broadcast<List<DerivedField>> targetFields;
+	private DefaultTransformationExecutor exec;
+	private PMML pmml;
+	private List<DataField> dataFields;
+	private List<DerivedField> activeFields;
+	private List<DerivedField> targetFields;
 
-	public BroadcastVariables(JavaSparkContext jsc, DefaultTransformationExecutor executor, PMML pmml, List<DataField> dataFields, List<DerivedField> activeFields, List<DerivedField> targetFields) {
+	public BroadcastVariables(DefaultTransformationExecutor executor, PMML pmml, List<DataField> dataFields, List<DerivedField> activeFields, List<DerivedField> targetFields) {
 		// TODO Auto-generated constructor stub
-		this.exec= jsc.broadcast(executor);
-		this.pmml= jsc.broadcast(pmml);
-		this.dataFields= jsc.broadcast(dataFields);
-		this.activeFields= jsc.broadcast(activeFields);
-		this.targetFields= jsc.broadcast(targetFields);
+		this.exec= executor;
+		this.pmml= pmml;
+		this.dataFields= dataFields;
+		this.activeFields= activeFields;
+		this.targetFields= targetFields;
 	}
 
 	public PMML getPmml() {
-		return pmml.value();
+		return pmml;
 	}
 
 	public List<DataField> getDataFields() {
-		return dataFields.value();
+		return dataFields;
 	}
 
 	public List<DerivedField> getTargetFields() {
-		return targetFields.value();
+		return targetFields;
 	}
 
 	public List<DerivedField> getActiveFields() {
-		return activeFields.value();
+		return activeFields;
 	}
 
 	public DefaultTransformationExecutor getExec() {
-		return exec.value();
+		return exec;
 	}
 
 }

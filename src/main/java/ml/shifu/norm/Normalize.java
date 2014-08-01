@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.broadcast.Broadcast;
 
 import com.google.common.base.Joiner;
 
@@ -26,9 +27,9 @@ public class Normalize implements Function<String, String> {
 	private BroadcastVariables bVar;
 	private String delimiter= ",";
  
-        public Normalize(BroadcastVariables bVar) {
+        public Normalize(Broadcast<BroadcastVariables> bVar) {
 			// TODO Auto-generated constructor stub
-    	this.bVar= bVar;
+    	this.bVar= bVar.value();
 	}
 
 

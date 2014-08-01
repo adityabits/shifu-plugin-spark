@@ -65,7 +65,6 @@ public class SparkSubmitter {
         FileUtils.deleteDirectory(new File(pathOutputData));
 		//FileUtils.deleteDirectory(new File(tmpOutputSplitPath));
 
-        Model model= PMMLUtils.getModelByName(pmml, params.get("modelName").toString());
         DefaultTransformationExecutor executor= new DefaultTransformationExecutor();
 
         SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("yarn-client");
@@ -83,10 +82,9 @@ public class SparkSubmitter {
         Broadcast<List<DerivedField>> bTargetFields= jsc.broadcast(targetFields);
     	*/
         
-        BroadcastVariables bvar= new BroadcastVariables(jsc, executor, pmml, pmml.getDataDictionary().getDataFields(), activeFields, targetFields);
-        
+        Broadcast<BroadcastVariables> bVar= jsc.broadcast(new BroadcastVariables(executor, pmml, pmml.getDataDictionary().getDataFields(), activeFields, targetFields));
         JavaRDD<String> raw= jsc.textFile(pathHDFSInput);
-    	JavaRDD<String> normalized= raw.map(new Normalize(bvar));
+    	JavaRDD<String> normalized= raw.map(new Normalize(bVar));
     	
     	normalized.saveAsTextFile(pathOutputData);
       
