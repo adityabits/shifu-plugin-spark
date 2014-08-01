@@ -40,9 +40,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         CombinedUtils.writeTransformationHeader(pathOutputActiveHeader, activeFields, targetFields);
         String pathHDFSPmml= HDFSFileUtils.uploadToHDFS(HdfsUri, pathPMML, pathHDFSTmp);
         String pathHDFSRequest= HDFSFileUtils.uploadToHDFS(HdfsUri, pathRequest, pathHDFSTmp);
-
-        // TODO: construct normalize header file
-
+        
         // call spark-submit
         String Spark_submit= (String) params.get("SparkHome") + "/bin/spark-submit";
         System.out.println( Spark_submit);

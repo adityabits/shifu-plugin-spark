@@ -1,5 +1,6 @@
 package ml.shifu.norm;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -67,7 +68,7 @@ public class CombinedUtils {
 	}
             
 	// Should go into PMMLUtils
-	public static PMML loadPMML(String pathPMML, FileSystem fs) {
+	public static PMML loadPMML(String pathPMML, FileSystem fs) throws IOException {
 		// load PMML from any fs- local or hdfs
 		InputStream pmmlInputStream= null;
 		PMML pmml= null;
@@ -78,6 +79,9 @@ public class CombinedUtils {
 		    pmml=  JAXBUtil.unmarshalPMML(transformedSource);
 		} catch (Exception e) {
 		    e.printStackTrace();
+		} finally {
+			if(pmmlInputStream != null)
+				pmmlInputStream.close();
 		}
 		return pmml;
 	}

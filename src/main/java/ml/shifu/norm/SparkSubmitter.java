@@ -38,8 +38,8 @@ public class SparkSubmitter {
     {
         // argument 1: HDFS path to request.json
         // argument 2: HDFS path to PMML model.xml
-        String pathReq= args[0];
-        String pathPMML= args[1];
+        String pathPMML= args[0];
+        String pathReq= args[1];
 
         FileSystem fs= FileSystem.get(new Configuration());
         PMML pmml= CombinedUtils.loadPMML(pathPMML, fs);        
@@ -73,7 +73,7 @@ public class SparkSubmitter {
         conf.set("spark.kyro.Registrator", "ml.shifu.norm.MyRegistrator");
         JavaSparkContext jsc= new JavaSparkContext(conf);
         List<DerivedField> activeFields= CombinedUtils.getActiveFields(pmml, params);
-        List<DerivedField> targetFields= CombinedUtils.getActiveFields(pmml, params);
+        List<DerivedField> targetFields= CombinedUtils.getTargetFields(pmml, params);
         
         /*
         Broadcast<DefaultTransformationExecutor> bexec= jsc.broadcast(executor);
