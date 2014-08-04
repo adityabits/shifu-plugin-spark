@@ -1,9 +1,13 @@
+/*
+ * This is the class which contains all the variables which are broadcast to the worker nodes. 
+ * An object of this class is created and wrapped into a broadcast variable using JavaSparkContext.broadcast().
+ * The resulting broadcast variable is passed to all Normalizers running on the worker nodes. 
+ * The Normalizers unpack the BroadcastVariables object and use the contained variables.
+ */
 package ml.shifu.norm;
 
 import java.util.List;
 
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.broadcast.Broadcast;
 import org.dmg.pmml.DataField;
 import org.dmg.pmml.DerivedField;
 import org.dmg.pmml.PMML;

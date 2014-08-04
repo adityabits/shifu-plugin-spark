@@ -1,3 +1,8 @@
+/* 
+ * Contains all utils functions used by spark normalizer.
+ * TODO: These must be integrated into utils of shifu-core.
+ * 
+ */
 package ml.shifu.norm;
 
 import java.io.IOException;

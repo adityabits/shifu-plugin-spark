@@ -1,29 +1,28 @@
+/*
+ * This is the class that is called by spark-submit. Hence, it requires a main method.
+ * The two arguments required for this class are the paths to the PMML XML model file and the request JSON file.
+ * In the main method, 
+ * 	1. The paths and other parameters are unpacked from the request object
+ * 	2. SparkConf and JavaSparkContext objects are created 
+ * 	3. Broadcast variables are populated
+ * 	4. JavaRDD is created from the input file
+ * 	5. Map operation is done on the RDD using the Normalize class
+ * 	6. resulting JavaRDD is stored as a text file in the input
+ */
+
 package ml.shifu.norm;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.conf.Configuration;
 import org.dmg.pmml.*;
-import org.jpmml.evaluator.ExpressionUtil;
-import org.jpmml.model.ImportFilter;
-import org.jpmml.model.JAXBUtil;
-import org.xml.sax.InputSource;
 
 import ml.shifu.core.di.builtin.transform.DefaultTransformationExecutor;
-import ml.shifu.core.di.module.SimpleModule;
-import ml.shifu.core.di.service.TransformationExecService;
-import ml.shifu.core.di.spi.RequestProcessor;
-import ml.shifu.core.di.spi.TransformationExecutor;
 import ml.shifu.core.request.Request;
-import ml.shifu.core.util.PMMLUtils;
 import ml.shifu.core.util.Params;
 import ml.shifu.core.util.JSONUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
+import org.apache.spark.serializer.KryoSerializer;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.SparkConf;
@@ -31,9 +30,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
 
-import javax.xml.transform.sax.SAXSource;
-
-public class SparkSubmitter {
+public class SparkNormalizer {
     public static void main(String[] args) throws Exception
     {
         // argument 1: HDFS path to request.json
@@ -54,17 +51,6 @@ public class SparkSubmitter {
         String HdfsUri= (String) params.get("HdfsUri", "hdfs://localhost:9000");
         String pathHDFSInput= HDFSFileUtils.uploadToHDFS(HdfsUri, pathInputData, pathHDFSTmp);
 
-        //String pathPMML = (String) params.get("pathPMML", "model.xml");
-
-        // create splits of input file:
-        //PMML pmml = PMMLUtils.loadPMML(pathPMML);
-        //Integer nRecords= Integer.parseInt(params.get("nRecords").toString());
-        //MyFileUtils.splitInputFile(pathInputData, tmpInputSplitPath, nRecords);
-        
-        //Delete pathOutputData and tmpOutputSplitPath if they already exist
-        FileUtils.deleteDirectory(new File(pathOutputData));
-		//FileUtils.deleteDirectory(new File(tmpOutputSplitPath));
-
         DefaultTransformationExecutor executor= new DefaultTransformationExecutor();
 
         SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("yarn-client");
@@ -73,14 +59,6 @@ public class SparkSubmitter {
         JavaSparkContext jsc= new JavaSparkContext(conf);
         List<DerivedField> activeFields= CombinedUtils.getActiveFields(pmml, params);
         List<DerivedField> targetFields= CombinedUtils.getTargetFields(pmml, params);
-        
-        /*
-        Broadcast<DefaultTransformationExecutor> bexec= jsc.broadcast(executor);
-        Broadcast<PMML> bpmml= jsc.broadcast(pmml);
-        Broadcast<List<DataField>> bDataFields= jsc.broadcast(pmml.getDataDictionary().getDataFields());
-        Broadcast<List<DerivedField>> bActiveFields= jsc.broadcast(activeFields);
-        Broadcast<List<DerivedField>> bTargetFields= jsc.broadcast(targetFields);
-    	*/
         
         Broadcast<BroadcastVariables> bVar= jsc.broadcast(new BroadcastVariables(executor, pmml, pmml.getDataDictionary().getDataFields(), activeFields, targetFields));
         JavaRDD<String> raw= jsc.textFile(pathHDFSInput);

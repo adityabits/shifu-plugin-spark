@@ -1,3 +1,7 @@
+/*
+ * Registers the classes to be normalized, so that the full class name does not have to be serialized along 
+ * with every object.
+ */
 package ml.shifu.norm;
 
 import org.apache.spark.serializer.KryoRegistrator;
@@ -15,10 +19,6 @@ public class MyRegistrator implements KryoRegistrator {
 
 	@Override
 	public void registerClasses(Kryo kryo) {
-		// TODO Auto-generated method stub
-		kryo.register(DataField.class);
-		kryo.register(PMML.class);
-		kryo.register(DerivedField.class);
 		kryo.register(BroadcastVariables.class);
 	}
 

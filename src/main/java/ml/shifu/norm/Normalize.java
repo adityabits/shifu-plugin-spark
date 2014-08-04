@@ -1,3 +1,12 @@
+/*
+ * This is the user defined function which is called by Spark "map" on each record in the JavaRDD.
+ * This map should be applied on the raw JavaRDD containing strings of raw rows from the input data file.
+ * This class is initialized with an BroadcastVariables object as the single broadcast variable.
+ * Normalization takes a single row of data and applies transformations defined in the PMML object by 
+ * calling the transform() function of the TransformationExecutor object.
+ * The resulting normalized row is again converted to a single string which is output.
+ */
+
 package ml.shifu.norm;
 
 import java.util.List;
@@ -9,53 +18,26 @@ import org.apache.spark.broadcast.Broadcast;
 import com.google.common.base.Joiner;
 
 public class Normalize implements Function<String, String> {
-	/*
-    private Broadcast<PMML> bpmml;
-    private Broadcast<DefaultTransformationExecutor> bexec;
-	private Broadcast<List<DataField>> bDataFields;
-	private Broadcast<List<DerivedField>> bActiveFields;
-	private Broadcast<List<DerivedField>> bTargetFields;
-	
-    Normalize(Broadcast<PMML> bpmml, Broadcast<DefaultTransformationExecutor> bexec, Broadcast<List<DataField>> bDataFields, Broadcast<List<DerivedField>> bActiveFields, Broadcast<List<DerivedField>> bTargetFields) {
-        this.bpmml= bpmml;
-        this.bexec= bexec;
-        this.bDataFields= bDataFields;
-        this.bActiveFields= bActiveFields;
-        this.bTargetFields= bTargetFields;
-    }
-	*/
-	private BroadcastVariables bVar;
+	//private BroadcastVariables bVar;
 	private String delimiter= ",";
+	// TODO: get this from bVar
+	private Broadcast<BroadcastVariables> broadVar;
  
         public Normalize(Broadcast<BroadcastVariables> bVar) {
-			// TODO Auto-generated constructor stub
-    	this.bVar= bVar.value();
+    	//this.bVar= bVar.value();
+    	this.broadVar= bVar;
 	}
 
 
 	@Override
     public String call(String input) {
-		/*
-        List<Object> parsedInput= new ArrayList<Object>();
-        
-        // Put this step into shifu.core.utils
-        for(String s: Splitter.on(delimiter).split(input)) {
-            parsedInput.add(s);
-        }
-        */
+		System.out.println("line:" + input);
 		
 		List<Object> parsedInput= CombinedUtils.getParsedObjects(input, delimiter);
-        /*
-        Map<String, Object> rawDataMap= new HashMap<String, Object>();
-        for(int i=0; i < parsedInput.size(); i++) {
-            rawDataMap.put(bVar.getDataFields().get(i).getName().getValue(), parsedInput.get(i));
-        }
-        */
-        
-        Map<String, Object> rawDataMap= CombinedUtils.createDataMap(bVar.getDataFields(), parsedInput);
-
-        List<Object> result= bVar.getExec().transform(bVar.getTargetFields(), rawDataMap);
-        result.addAll(bVar.getExec().transform(bVar.getActiveFields(), rawDataMap));
+        Map<String, Object> rawDataMap= CombinedUtils.createDataMap(broadVar.value().getDataFields(), parsedInput);
+        System.out.println("Length of parsedInput = " + parsedInput.size());
+        List<Object> result= broadVar.value().getExec().transform(broadVar.value().getTargetFields(), rawDataMap);
+        result.addAll(broadVar.value().getExec().transform(broadVar.value().getActiveFields(), rawDataMap));
         return Joiner.on(delimiter).join(result);
         
     }
