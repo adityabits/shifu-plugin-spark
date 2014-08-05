@@ -31,11 +31,14 @@ public class Normalize implements Function<String, String> {
 
 	@Override
     public String call(String input) {
-		System.out.println("line:" + input);
 		
 		List<Object> parsedInput= CombinedUtils.getParsedObjects(input, delimiter);
         Map<String, Object> rawDataMap= CombinedUtils.createDataMap(broadVar.value().getDataFields(), parsedInput);
-        System.out.println("Length of parsedInput = " + parsedInput.size());
+        System.out.println("parsedInput: " + parsedInput.toString());
+		System.out.println("Length of parsedInput = " + parsedInput.size());
+        System.out.println("data fields= " + broadVar.value().getDataFields());
+        
+        System.out.println("Rawdatamap= " + rawDataMap.toString());
         List<Object> result= broadVar.value().getExec().transform(broadVar.value().getTargetFields(), rawDataMap);
         result.addAll(broadVar.value().getExec().transform(broadVar.value().getActiveFields(), rawDataMap));
         return Joiner.on(delimiter).join(result);

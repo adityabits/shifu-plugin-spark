@@ -97,7 +97,7 @@ public class CombinedUtils {
         for(int i=0; i < parsedInput.size(); i++) {
             rawDataMap.put(dataFields.get(i).getName().getValue(), parsedInput.get(i));
         }
-		return null;
+		return rawDataMap;
 	}
 
 	public static List<Object> getParsedObjects(String input, String delimiter) {

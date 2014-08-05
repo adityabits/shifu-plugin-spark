@@ -8,6 +8,15 @@
  * 		i. The path to the jar file of spark-normalization plugin which contains all dependencies
  * 		ii. The name of the main class which is ml.shifu.norm.SparkNormalizer
  * 		iii. The arguments to SparkNormalizer- HDFS paths to PMML XML and Request JSON
+ *
+ *
+ * Parameters required in Request object:
+ * 	1. Path of PMML XML- can be either local or HDFS
+ * 	2. Path of Request object- can be either local or HDFS
+ * 	3. Input file path- local/ hdfs
+ * 	4. Output file path- local/ hdfs
+ * 	5. HDFS temp directory path- MUST be HDFS
+ * 	6. 
  */
 
 package ml.shifu.norm;
@@ -25,6 +34,8 @@ import java.lang.ProcessBuilder;
 import java.lang.ProcessBuilder.Redirect;
 import java.lang.Process;
 
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.Path;
 
 public class SparkModelTransformRequestProcessor implements RequestProcessor {
 
@@ -35,30 +46,58 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         String pathRequest= (String) params.get("pathRequest", "request.xml");
         String pathHDFSTmp= (String) params.get("pathHDFSTmp", "ml/shifu/norm/tmp");
         String pathToJar= (String) params.get("pathToJar"); // default value?
-        String HdfsUri= (String)params.get("HdfsUri", "hdfs://localhost:9000");
-        System.out.println(HdfsUri);
-
-        // upload PMML XML file to HDFS and get its path
+        String pathHadoopConf= (String)params.get("pathHadoopConf", "/usr/local/hadoop/etc/hadoop");
         String pathOutputActiveHeader= params.get("pathOutputActiveHeader").toString();
+        String pathOutputData= params.get("pathOutputData").toString();
+        String pathInputData= params.get("pathInputData").toString();
+        
+        HDFSFileUtils hdfsUtils= new HDFSFileUtils(pathHadoopConf);
+        pathHDFSTmp= hdfsUtils.relativeToFullHDFSPath(pathHDFSTmp);
+        
+        // delete output file and hdfs tmp file's output folder
+        hdfsUtils.delete(new Path(pathOutputData));
+        hdfsUtils.delete(new Path(pathHDFSTmp + '/' + "output"));
+        
+        
+        // upload PMML.xml and Request.json to HDFS if on local FS
+        String pathHDFSPmml= hdfsUtils.uploadToHDFSIfLocal(pathPMML, pathHDFSTmp);
+        String pathHDFSRequest= hdfsUtils.uploadToHDFSIfLocal(pathRequest, pathHDFSTmp);
+        String pathHDFSInput= hdfsUtils.uploadToHDFSIfLocal(pathInputData, pathHDFSTmp);
+        
+        String hdfsUri= hdfsUtils.getURI();
+        
+                
         PMML pmml= PMMLUtils.loadPMML(pathPMML);
-        List<DerivedField> activeFields= CombinedUtils.getActiveFields(pmml, params);
+		List<DerivedField> activeFields= CombinedUtils.getActiveFields(pmml, params);
         List<DerivedField> targetFields= CombinedUtils.getTargetFields(pmml, params);        
         CombinedUtils.writeTransformationHeader(pathOutputActiveHeader, activeFields, targetFields);
-        String pathHDFSPmml= HDFSFileUtils.uploadToHDFS(HdfsUri, pathPMML, pathHDFSTmp);
-        String pathHDFSRequest= HDFSFileUtils.uploadToHDFS(HdfsUri, pathRequest, pathHDFSTmp);
         
-        System.out.println(pathHDFSRequest);
-        System.out.println(pathHDFSPmml);
-
         // call spark-submit
         String Spark_submit= (String) params.get("SparkHome") + "/bin/spark-submit";
         System.out.println( Spark_submit);
-        ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.norm.SparkNormalizer", pathToJar, pathHDFSPmml, pathHDFSRequest);
+        ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.norm.SparkNormalizer", pathToJar, hdfsUri, pathHDFSInput, pathHDFSPmml, pathHDFSRequest);
         procBuilder.redirectErrorStream(true);
         File outputFile= new File("log");
         procBuilder.redirectOutput(Redirect.appendTo(outputFile));
         Process proc= procBuilder.start(); 
         proc.waitFor();
+        
+        // now concatenate all files in pathHDFSTmp + "/output" + "/part-*" into pathOutputData
+        /*
+        File[] outputFiles= new File(pathHDFSTmp).listFiles(new SparkOutputFileNameFilter());
+        for(int i=0; i < outputFiles.length; i++) 
+        	System.out.println("FIle " + outputFiles[i].getPath());
+        // convert File[] to Path[]
+        Path[] outputPaths= new Path[outputFiles.length];
+        for(int i= 0; i < outputFiles.length; i++) {
+        	outputPaths[i]= new Path(hdfsUtils.relativeToFullHDFSPath(outputFiles[i].getPath()));
+        }
+        // check if pathOutputData is in HDFS- in that case trg must be pathOutputData
+        Path trg= new Path(pathHDFSTmp + "/" + "concat_output");
+        hdfsUtils.concat(trg, outputPaths);
+        // copy concatenated file to required address in local FS
+         * 
+         */
     }
     
 }

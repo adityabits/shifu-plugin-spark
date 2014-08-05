@@ -1176,7 +1176,7 @@
                 <FieldRef field="id"/>
             </DerivedField>
             <DerivedField name="diagnosis_LocalTransformed" optype="categorical" dataType="string">
-                <MapValues outputColumn="transformed">
+                <MapValues outputColumn="transformed" dataType="string">
                     <FieldColumnPair field="diagnosis" column="origin"/>
                     <InlineTable>
                         <row>

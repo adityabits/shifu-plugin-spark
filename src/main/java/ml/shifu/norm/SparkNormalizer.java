@@ -8,6 +8,7 @@
  * 	4. JavaRDD is created from the input file
  * 	5. Map operation is done on the RDD using the Normalize class
  * 	6. resulting JavaRDD is stored as a text file in the input
+ * 
  */
 
 package ml.shifu.norm;
@@ -21,9 +22,10 @@ import ml.shifu.core.request.Request;
 import ml.shifu.core.util.Params;
 import ml.shifu.core.util.JSONUtils;
 
+import java.net.URI;
 import java.util.List;
-import org.apache.spark.serializer.KryoSerializer;
 
+import org.apache.spark.serializer.KryoSerializer;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -33,26 +35,30 @@ import org.apache.spark.broadcast.Broadcast;
 public class SparkNormalizer {
     public static void main(String[] args) throws Exception
     {
-        // argument 1: HDFS path to request.json
-        // argument 2: HDFS path to PMML model.xml
-        String pathPMML= args[0];
-        String pathReq= args[1];
+    	// argument 1: HDFS Uri
+        // argument 2: HDFS path to request.json
+        // argument 3: HDFS path to PMML model.xml
+        String hdfsUri= args[0];
+        String pathHDFSInputData= args[1];
+    	String pathHDFSPmml= args[2];
+        String pathHDFSReq= args[3];
+        
+        FileSystem fs= FileSystem.get(new URI(hdfsUri), new Configuration());
+        
+        PMML pmml= CombinedUtils.loadPMML(pathHDFSPmml, fs);        
 
-        FileSystem fs= FileSystem.get(new Configuration());
-        PMML pmml= CombinedUtils.loadPMML(pathPMML, fs);        
-
-        Request req=  JSONUtils.readValue(fs.open(new Path(pathReq)), Request.class); 
+        Request req=  JSONUtils.readValue(fs.open(new Path(pathHDFSReq)), Request.class); 
         
         Params params= req.getProcessor().getParams();
 
-        String pathInputData= params.get("pathInputData").toString();
-        String pathOutputData= params.get("pathOutputData").toString();
+        // TODO: Convert pathHDFSTmp to full hdfs path
         String pathHDFSTmp= (String) params.get("pathHDFSTmp", "ml/shifu/norm/tmp");
-        String HdfsUri= (String) params.get("HdfsUri", "hdfs://localhost:9000");
-        String pathHDFSInput= HDFSFileUtils.uploadToHDFS(HdfsUri, pathInputData, pathHDFSTmp);
-
+        // the output will be to pathHDFSTmp for now, before we concatenate all part-* files
+        
+        // TODO: use DI
         DefaultTransformationExecutor executor= new DefaultTransformationExecutor();
-
+        
+        // TODO: parametrize
         SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("yarn-client");
         conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         conf.set("spark.kyro.Registrator", "ml.shifu.norm.MyRegistrator");
@@ -61,10 +67,10 @@ public class SparkNormalizer {
         List<DerivedField> targetFields= CombinedUtils.getTargetFields(pmml, params);
         
         Broadcast<BroadcastVariables> bVar= jsc.broadcast(new BroadcastVariables(executor, pmml, pmml.getDataDictionary().getDataFields(), activeFields, targetFields));
-        JavaRDD<String> raw= jsc.textFile(pathHDFSInput);
+        JavaRDD<String> raw= jsc.textFile(pathHDFSInputData);
     	JavaRDD<String> normalized= raw.map(new Normalize(bVar));
     	
-    	normalized.saveAsTextFile(pathOutputData);
+    	normalized.saveAsTextFile(pathHDFSTmp + "/" + "output");
       
     }
 
