@@ -19,7 +19,7 @@
  * 	6. 
  */
 
-package ml.shifu.norm;
+package ml.shifu.plugin.spark;
 
 import org.dmg.pmml.*;
 
@@ -75,29 +75,17 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         // call spark-submit
         String Spark_submit= (String) params.get("SparkHome") + "/bin/spark-submit";
         System.out.println( Spark_submit);
-        ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.norm.SparkNormalizer", pathToJar, hdfsUri, pathHDFSInput, pathHDFSPmml, pathHDFSRequest);
+        ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.plugin.spark.SparkNormalizer", pathToJar, hdfsUri, pathHDFSInput, pathHDFSPmml, pathHDFSRequest);
         procBuilder.redirectErrorStream(true);
         File outputFile= new File("log");
         procBuilder.redirectOutput(Redirect.appendTo(outputFile));
         Process proc= procBuilder.start(); 
         proc.waitFor();
+        System.out.println("Job complete, now concatenating files");
+        System.out.println("pathHDFSTmp= " + pathHDFSTmp);
+        // now concatenate all files into a single file on HDFS
+        hdfsUtils.concat(pathOutputData, pathHDFSTmp + "/output", new SparkOutputFileNameFilter());
         
-        // now concatenate all files in pathHDFSTmp + "/output" + "/part-*" into pathOutputData
-        /*
-        File[] outputFiles= new File(pathHDFSTmp).listFiles(new SparkOutputFileNameFilter());
-        for(int i=0; i < outputFiles.length; i++) 
-        	System.out.println("FIle " + outputFiles[i].getPath());
-        // convert File[] to Path[]
-        Path[] outputPaths= new Path[outputFiles.length];
-        for(int i= 0; i < outputFiles.length; i++) {
-        	outputPaths[i]= new Path(hdfsUtils.relativeToFullHDFSPath(outputFiles[i].getPath()));
-        }
-        // check if pathOutputData is in HDFS- in that case trg must be pathOutputData
-        Path trg= new Path(pathHDFSTmp + "/" + "concat_output");
-        hdfsUtils.concat(trg, outputPaths);
-        // copy concatenated file to required address in local FS
-         * 
-         */
     }
     
 }

@@ -2,7 +2,7 @@
  * Registers the classes to be normalized, so that the full class name does not have to be serialized along 
  * with every object.
  */
-package ml.shifu.norm;
+package ml.shifu.plugin.spark;
 
 import org.apache.spark.serializer.KryoRegistrator;
 import org.dmg.pmml.DataField;

@@ -1,4 +1,4 @@
-package ml.shifu.norm;
+package ml.shifu.plugin.spark;
 
 import java.io.BufferedReader;
 import java.io.File;

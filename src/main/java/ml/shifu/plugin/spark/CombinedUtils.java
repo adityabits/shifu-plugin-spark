@@ -3,7 +3,7 @@
  * TODO: These must be integrated into utils of shifu-core.
  * 
  */
-package ml.shifu.norm;
+package ml.shifu.plugin.spark;
 
 import java.io.IOException;
 import java.io.InputStream;

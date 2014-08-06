@@ -1,28 +1,45 @@
-package ml.shifu.norm;
+/*
+ * Contains utils for dealing with HDFS or local filesystems specific to the spark normalization code.
+ */
+package ml.shifu.plugin.spark;
 
 import java.io.IOException;
-import java.net.URI;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 
 
 public class HDFSFileUtils {
 	
 	private Configuration hdfsConf;
 	FileSystem hdfs;
-	HDFSFileUtils(String hadoopConfPath) {
+	
+	HDFSFileUtils(String hadoopConfPath) throws IOException {
 		this.hdfsConf = new Configuration();
 		// TODO: use a path joiner(?)
-		this.hdfsConf.addResource(new Path(hadoopConfPath + "/" + "core-site.xml"));
-		this.hdfsConf.addResource(new Path(hadoopConfPath + "/" + "hdfs-site.xml"));
+		Path coreSitePath= new Path(hadoopConfPath + "/" + "core-site.xml");
+		Path hdfsSitePath= new Path(hadoopConfPath + "/" + "hdfs-site.xml");
+		this.hdfsConf.addResource(coreSitePath);
+		this.hdfsConf.addResource(hdfsSitePath);
 		try {
 			this.hdfs= FileSystem.get(this.hdfsConf);
 		} catch (IOException e) {
 			System.out.println("Could not create instance of filesystem");
 			e.printStackTrace();
 		}
+		System.out.println("hdfs filesystem= " + this.hdfs.toString());
+		System.out.println("reading hdfs conf from " + coreSitePath.toString() + ", " + hdfsSitePath.toString());
+
+		FileSystem localFS= FileSystem.get(new Configuration());
+		if(localFS.exists(coreSitePath) && localFS.exists(hdfsSitePath))
+			System.out.println("Both paths exist!!!");
+		else
+			System.out.println("At least one path not found");
+		localFS.close();
 	}
 	
 	public void concat(Path trg, Path[] src) {
@@ -33,6 +50,7 @@ public class HDFSFileUtils {
 			e.printStackTrace();
 		}
 	}
+
 	public boolean delete(Path p) {
 		System.out.println("Deleting file " + p.toString());
 		// deletes files from either local/ hdfs filesystems
@@ -102,4 +120,37 @@ public class HDFSFileUtils {
 		}
     	return retValue;
     }
+    
+    public void concat(String target, String dirpath, PathFilter filter) throws IllegalArgumentException, IOException {
+    	// now concatenate
+    	Path targetPath= new Path(target);
+    	FileSystem targetFS= targetPath.getFileSystem(this.hdfsConf);
+    	System.out.println("Target path " + target);
+    	System.out.println("Dirpath path " + dirpath);
+    	
+    	targetFS.delete(targetPath, false);
+		System.out.println("target FS- " + targetFS.toString());
+		FileUtil.copyMerge(this.hdfs, new Path(dirpath), targetFS, new Path(target), true, this.hdfsConf, "");
+
+		targetFS.close();    	
+    }
+    
+    
+	public Path[] listFiles(String path,
+			PathFilter filter) {
+		FileStatus[] fstatus= null;
+		try {
+			fstatus= this.hdfs.listStatus(new Path(path), filter);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		Path[] paths= new Path[fstatus.length];
+		for(int i= 0; i < fstatus.length; i++) {
+			paths[i]= fstatus[i].getPath();
+			System.out.println("source path= " + paths[i]);
+		}
+		
+		return paths;
+	}
 }

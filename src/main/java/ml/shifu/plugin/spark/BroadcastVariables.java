@@ -4,7 +4,7 @@
  * The resulting broadcast variable is passed to all Normalizers running on the worker nodes. 
  * The Normalizers unpack the BroadcastVariables object and use the contained variables.
  */
-package ml.shifu.norm;
+package ml.shifu.plugin.spark;
 
 import java.util.List;
 

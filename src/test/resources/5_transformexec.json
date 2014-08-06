@@ -8,7 +8,7 @@
             "modelName": "demoModel",
             "pathPMML": "./src/test/resources/model.xml",
             "pathInputData": "./src/test/resources/data/wdbc.train",
-            "pathOutputData": "file:///Users/apalnitkar/output",
+            "pathOutputData": "file:///Users/apalnitkar/workspace/spark-norm/output",
             "pathHDFSTmp":"ml/shifu/norm/tmp",
             "pathHadoopConf":"/usr/local/hadoop/etc/hadoop",
             "pathOutputActiveHeader": "./src/test/resources/generated/normalized_header.txt",

@@ -7,7 +7,7 @@
  * The resulting normalized row is again converted to a single string which is output.
  */
 
-package ml.shifu.norm;
+package ml.shifu.plugin.spark;
 
 import java.util.List;
 import java.util.Map;
@@ -34,11 +34,6 @@ public class Normalize implements Function<String, String> {
 		
 		List<Object> parsedInput= CombinedUtils.getParsedObjects(input, delimiter);
         Map<String, Object> rawDataMap= CombinedUtils.createDataMap(broadVar.value().getDataFields(), parsedInput);
-        System.out.println("parsedInput: " + parsedInput.toString());
-		System.out.println("Length of parsedInput = " + parsedInput.size());
-        System.out.println("data fields= " + broadVar.value().getDataFields());
-        
-        System.out.println("Rawdatamap= " + rawDataMap.toString());
         List<Object> result= broadVar.value().getExec().transform(broadVar.value().getTargetFields(), rawDataMap);
         result.addAll(broadVar.value().getExec().transform(broadVar.value().getActiveFields(), rawDataMap));
         return Joiner.on(delimiter).join(result);

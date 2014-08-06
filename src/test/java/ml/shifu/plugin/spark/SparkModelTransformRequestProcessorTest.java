@@ -1,10 +1,11 @@
-package ml.shifu.norm;
+package ml.shifu.plugin.spark;
 import java.io.File;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import ml.shifu.norm.SparkModelTransformRequestProcessor;
 import ml.shifu.core.request.Request;
 import ml.shifu.core.util.JSONUtils;
+import ml.shifu.plugin.spark.SparkModelTransformRequestProcessor;
+
 
 public class SparkModelTransformRequestProcessorTest {
 
@@ -14,5 +15,4 @@ public class SparkModelTransformRequestProcessorTest {
         Request req=  JSONUtils.readValue(new File("src/test/resources/5_transformexec.json"), Request.class); 
         strp.exec(req);
     }
-
 }

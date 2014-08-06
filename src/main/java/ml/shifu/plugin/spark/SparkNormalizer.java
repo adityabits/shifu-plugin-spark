@@ -11,7 +11,7 @@
  * 
  */
 
-package ml.shifu.norm;
+package ml.shifu.plugin.spark;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.conf.Configuration;
