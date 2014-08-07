@@ -1,6 +1,6 @@
 /*
  * This is the class that is called by spark-submit. Hence, it requires a main method.
- * The two arguments required for this class are the paths to the PMML XML model file and the request JSON file.
+ * The three arguments required for this class are the paths to the PMML XML model file and the request JSON file.
  * In the main method, 
  * 	1. The paths and other parameters are unpacked from the request object
  * 	2. SparkConf and JavaSparkContext objects are created 
@@ -18,9 +18,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.dmg.pmml.*;
 
 import ml.shifu.core.di.builtin.transform.DefaultTransformationExecutor;
+import ml.shifu.core.di.module.SimpleModule;
+import ml.shifu.core.di.service.UnivariateStatsService;
+import ml.shifu.core.request.Binding;
 import ml.shifu.core.request.Request;
 import ml.shifu.core.util.Params;
 import ml.shifu.core.util.JSONUtils;
+import ml.shifu.core.util.RequestUtils;
 
 import java.net.URI;
 import java.util.List;
@@ -30,6 +34,9 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 public class SparkNormalizer {
     public static void main(String[] args) throws Exception
@@ -51,26 +58,36 @@ public class SparkNormalizer {
         Params params= req.getProcessor().getParams();
 
         // TODO: Convert pathHDFSTmp to full hdfs path
-        String pathHDFSTmp= (String) params.get("pathHDFSTmp", "ml/shifu/norm/tmp");
-        // the output will be to pathHDFSTmp for now, before we concatenate all part-* files
+        String pathHDFSTmp= (String) params.get("pathHDFSTmp", "ml/shifu/plugin/spark/tmp");
+        String precision= (String) params.get("precision", "3");
+        String appName= (String)params.get("SparkAppName", "spark-norm");
+        String yarnMode= (String)params.get("yarnMode", "yarn-client");
         
-        // TODO: use DI
+        // TODO: add interface TransformExecutor, use DI
+        /*
+        SimpleModule module = new SimpleModule();
+        Binding dataDictionaryCreatorBinding = RequestUtils.getUniqueBinding(req, "TransformationExecutor");
+        module.set(dataDictionaryCreatorBinding);
+        Injector injector = Guice.createInjector(module);
+        TransformExecutor executor = injector.getInstance(UnivariateStatsService.class);
+		*/
         DefaultTransformationExecutor executor= new DefaultTransformationExecutor();
         
-        // TODO: parametrize
-        SparkConf conf= new SparkConf().setAppName("spark-norm").setMaster("yarn-client");
+        SparkConf conf= new SparkConf().setAppName(appName).setMaster(yarnMode);
         conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         conf.set("spark.kyro.Registrator", "ml.shifu.norm.MyRegistrator");
         JavaSparkContext jsc= new JavaSparkContext(conf);
         List<DerivedField> activeFields= CombinedUtils.getActiveFields(pmml, params);
         List<DerivedField> targetFields= CombinedUtils.getTargetFields(pmml, params);
         
-        Broadcast<BroadcastVariables> bVar= jsc.broadcast(new BroadcastVariables(executor, pmml, pmml.getDataDictionary().getDataFields(), activeFields, targetFields));
+        Broadcast<BroadcastVariables> bVar= jsc.broadcast(new BroadcastVariables(executor, pmml, pmml.getDataDictionary().getDataFields(), activeFields, targetFields, precision));
+        
         JavaRDD<String> raw= jsc.textFile(pathHDFSInputData);
     	JavaRDD<String> normalized= raw.map(new Normalize(bVar));
     	
+    	// create the output in a pathHDFSTmp/output directory. The files will be concatenated into a single file.
     	normalized.saveAsTextFile(pathHDFSTmp + "/" + "output");
-      
+    	
     }
 
 }

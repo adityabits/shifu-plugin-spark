@@ -6,9 +6,9 @@ package ml.shifu.plugin.spark;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 
@@ -16,7 +16,6 @@ import org.apache.hadoop.fs.PathFilter;
 public class HDFSFileUtils {
 	
 	private Configuration hdfsConf;
-	FileSystem hdfs;
 	
 	HDFSFileUtils(String hadoopConfPath) throws IOException {
 		this.hdfsConf = new Configuration();
@@ -25,32 +24,33 @@ public class HDFSFileUtils {
 		Path hdfsSitePath= new Path(hadoopConfPath + "/" + "hdfs-site.xml");
 		this.hdfsConf.addResource(coreSitePath);
 		this.hdfsConf.addResource(hdfsSitePath);
+		FileSystem hdfs= null;
 		try {
-			this.hdfs= FileSystem.get(this.hdfsConf);
+			hdfs= FileSystem.get(this.hdfsConf);
 		} catch (IOException e) {
-			System.out.println("Could not create instance of filesystem");
+			System.out.println("ERROR: Could not create instance of filesystem");
 			e.printStackTrace();
 		}
-		System.out.println("hdfs filesystem= " + this.hdfs.toString());
-		System.out.println("reading hdfs conf from " + coreSitePath.toString() + ", " + hdfsSitePath.toString());
-		/*
-		 * This step gives a "no filesystem found for scheme: hdfs" when run through shifu. 
-		FileSystem localFS= FileSystem.get(new Configuration());
-		if(localFS.exists(coreSitePath) && localFS.exists(hdfsSitePath))
-			System.out.println("Both paths exist!!!");
-		else
-			System.out.println("At least one path not found");
-		localFS.close();
-		*/
+		
+		if(hdfs instanceof LocalFileSystem) {
+			System.out.println("ERROR: Could not create instance of hdfs FileSystem. Please check hadoop configuration files");
+			throw new IOException();
+		}
+		
+		if(hdfs != null)
+			hdfs.close();
 	}
 	
-	public void concat(Path trg, Path[] src) {
+	public void concat(Path trg, Path[] src) throws IOException {
+		FileSystem hdfs= null;
 		try {
+			hdfs= FileSystem.get(this.hdfsConf);
 			hdfs.concat(trg, src);
 		} catch (IOException e) {
 			System.out.println("Failed to concatenate paths to " + trg.toString());
 			e.printStackTrace();
 		}
+		hdfs.close();
 	}
 
 	public boolean delete(Path p) {
@@ -70,19 +70,28 @@ public class HDFSFileUtils {
 			System.out.println("Cannot delete file " + p.toString());
 			e.printStackTrace();
 		}
-		return false;
+		try {
+			if(fs!= null)
+				fs.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return true;
 	}
 	
-	public String getURI() {
-		return this.hdfs.getUri().toString();
+	public String getURI() throws IOException {
+		FileSystem hdfs= FileSystem.get(this.hdfsConf);
+		String Uri= hdfs.getUri().toString();
+		hdfs.close();
+		return Uri;
 	}
     
     public String uploadToHDFS(String localPath, String HDFSDir) throws Exception {
         FileSystem fs= FileSystem.get(this.hdfsConf);
         String basename= new Path(localPath).getName().toString(); 
         Path HDFSPath= new Path(HDFSDir + "/" + basename);
-        // TODO: use a path joiner (?)
         fs.copyFromLocalFile(new Path(localPath), HDFSPath);
+        fs.close();
         return HDFSPath.toString();
     }
 
@@ -91,22 +100,31 @@ public class HDFSFileUtils {
     	if(localPath.startsWith("hdfs:"))
     		return localPath;
         String basename= new Path(localPath).getName().toString(); 
+    	System.out.println("Uploading " + basename + " to HDFS");
         Path HDFSPath= new Path(HDFSDir + "/" + basename);
         // TODO: use a path joiner (?)
-        this.hdfs.copyFromLocalFile(new Path(localPath), HDFSPath);
+        FileSystem hdfs= FileSystem.get(this.hdfsConf);
+        hdfs.copyFromLocalFile(new Path(localPath), HDFSPath);
+        hdfs.close();
         return relativeToFullHDFSPath(HDFSPath.toString());
     }
     
-    public String relativeToFullHDFSPath(String relPath) {
+    public String getHomeDir() throws IOException {
+    	FileSystem hdfs= FileSystem.get(this.hdfsConf);
+    	String homeDir= hdfs.getHomeDirectory().toString();
+    	hdfs.close();
+    	return homeDir;
+    }
+    public String relativeToFullHDFSPath(String relPath) throws IOException {
     	if(relPath.startsWith("hdfs:") || relPath.startsWith("file:"))
     		return relPath;
     	if(relPath.startsWith("/")) {
     		// relPath relative to root
-    		return this.hdfs.getUri().toString() + relPath;
+    		return this.getURI() + relPath;
     	}
     	else {
     		// assume that path is relative to home
-    		return this.hdfs.getHomeDirectory().toString() + "/" + relPath;
+    		return this.getHomeDir() + "/" + relPath;
     	}
     }
     
@@ -127,32 +145,16 @@ public class HDFSFileUtils {
     	// now concatenate
     	Path targetPath= new Path(target);
     	FileSystem targetFS= targetPath.getFileSystem(this.hdfsConf);
+    	FileSystem hdfs= FileSystem.get(this.hdfsConf);
     	System.out.println("Target path " + target);
     	System.out.println("Dirpath path " + dirpath);
     	
     	targetFS.delete(targetPath, false);
 		System.out.println("target FS- " + targetFS.toString());
-		FileUtil.copyMerge(this.hdfs, new Path(dirpath), targetFS, new Path(target), true, this.hdfsConf, "");
+		FileUtil.copyMerge(hdfs, new Path(dirpath), targetFS, new Path(target), true, this.hdfsConf, "");
 
-		targetFS.close();    	
+		targetFS.close();  
+		hdfs.close();
     }
     
-    
-	public Path[] listFiles(String path,
-			PathFilter filter) {
-		FileStatus[] fstatus= null;
-		try {
-			fstatus= this.hdfs.listStatus(new Path(path), filter);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		Path[] paths= new Path[fstatus.length];
-		for(int i= 0; i < fstatus.length; i++) {
-			paths[i]= fstatus[i].getPath();
-			System.out.println("source path= " + paths[i]);
-		}
-		
-		return paths;
-	}
 }

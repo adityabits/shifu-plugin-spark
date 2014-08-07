@@ -14,7 +14,8 @@
             "pathOutputActiveHeader": "./src/test/resources/generated/normalized_header.txt",
             "pathToJar": "file:///Users/apalnitkar/workspace/spark-norm/target/spark-norm-0.3.0-SNAPSHOT-jar-with-dependencies.jar",
             "pathRequest": "./src/test/resources/5_transformexec.json",
-            "SparkHome": "/Users/apalnitkar/installations/spark-1.0.1-bin-hadoop2"
+            "SparkHome": "/Users/apalnitkar/installations/spark-1.0.1-bin-hadoop2",
+            "precision":"3"
         }
     },
 

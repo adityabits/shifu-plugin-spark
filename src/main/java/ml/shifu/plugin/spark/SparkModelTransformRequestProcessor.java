@@ -3,20 +3,29 @@
  * when called with the Request object will:
  * 	1. Unpack paths and other parameters from request object
  * 	2. Create a header file
- * 	3. Upload PMML XML and Request JSON to HDFS
+ * 	3. Upload PMML XML and Request JSON to HDFS (if they are on local FS)
  * 	4. Create a process which calls the spark-submit script, with suitable arguments which include:
- * 		i. The path to the jar file of spark-normalization plugin which contains all dependencies
- * 		ii. The name of the main class which is ml.shifu.norm.SparkNormalizer
- * 		iii. The arguments to SparkNormalizer- HDFS paths to PMML XML and Request JSON
+ * 		i. The path to the jar file of the spark-normalization plugin which contains all dependencies
+ * 		ii. The name of the main class which is ml.shifu.plugin.spark.SparkNormalizer
+ * 		iii. The arguments to SparkNormalizer- the HDFS Uri, and HDFS paths to PMML XML and Request JSON
  *
  *
  * Parameters required in Request object:
- * 	1. Path of PMML XML- can be either local or HDFS
- * 	2. Path of Request object- can be either local or HDFS
- * 	3. Input file path- local/ hdfs
- * 	4. Output file path- local/ hdfs
- * 	5. HDFS temp directory path- MUST be HDFS
- * 	6. 
+ * 	1. Path of PMML XML- local/ HDFS 
+ * 	2. Path of Request object- local/ HDFS
+ * 	3. Input file path- local/ HDFS
+ * 	4. Output file path- local/ HDFS 
+ * 	5. HDFS temp directory path- will be assumed to be HDFS
+ * 	6. Output header file path- local	(HDFS TODO)
+ * 	7. Path to the assembly Jar file of the plugin: local (HDFS?)
+ * 	8. Path to hadoop configuration files: local
+ * 	9. model name in PMML file
+ * 	10. Spark home- for implementing the sparkHome/bin/spark-submit script
+ * 	11. precision- for the Float fields in the normalized data file
+ *	
+ *	Note: 	1, 2, 3, 4 can be local/HDFS. Will be assumed to be local in absence of "hdfs:" scheme
+ *	 		5 will be assumed to be HDFS path. "file:" scheme is invalid for this path.
+ *			6, 7, 8 are currently only supported as local paths.
  */
 
 package ml.shifu.plugin.spark;
@@ -44,28 +53,29 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         String pathPMML= (String) params.get("pathPMML", "model.xml");
         String pathRequest= (String) params.get("pathRequest", "request.xml");
         String pathHDFSTmp= (String) params.get("pathHDFSTmp", "ml/shifu/norm/tmp");
-        String pathToJar= (String) params.get("pathToJar"); // default value?
+        // pathHDFSTmp contains the uploaded PMML and request files and the output of the spark job
+        String pathToJar= (String) params.get("pathToJar");
         String pathHadoopConf= (String)params.get("pathHadoopConf", "/usr/local/hadoop/etc/hadoop");
         String pathOutputActiveHeader= params.get("pathOutputActiveHeader").toString();
         String pathOutputData= params.get("pathOutputData").toString();
+        // the files created in pathHDFSTmp/output are concatenated in pathOutputData to create final output file
         String pathInputData= params.get("pathInputData").toString();
         
         HDFSFileUtils hdfsUtils= new HDFSFileUtils(pathHadoopConf);
         pathHDFSTmp= hdfsUtils.relativeToFullHDFSPath(pathHDFSTmp);
-        
+        String pathOutputTmp= pathHDFSTmp + "/output";
         // delete output file and hdfs tmp file's output folder
         hdfsUtils.delete(new Path(pathOutputData));
-        hdfsUtils.delete(new Path(pathHDFSTmp + '/' + "output"));
+        hdfsUtils.delete(new Path(pathOutputTmp));
         
         
-        // upload PMML.xml and Request.json to HDFS if on local FS
+        // upload PMML.xml, Request.json and input data to HDFS if on local FScs
         String pathHDFSPmml= hdfsUtils.uploadToHDFSIfLocal(pathPMML, pathHDFSTmp);
         String pathHDFSRequest= hdfsUtils.uploadToHDFSIfLocal(pathRequest, pathHDFSTmp);
         String pathHDFSInput= hdfsUtils.uploadToHDFSIfLocal(pathInputData, pathHDFSTmp);
         
         String hdfsUri= hdfsUtils.getURI();
         
-                
         PMML pmml= PMMLUtils.loadPMML(pathPMML);
 		List<DerivedField> activeFields= CombinedUtils.getActiveFields(pmml, params);
         List<DerivedField> targetFields= CombinedUtils.getTargetFields(pmml, params);        
@@ -78,12 +88,12 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         procBuilder.redirectErrorStream(true);
         File outputFile= new File("log");
         procBuilder.redirectOutput(Redirect.appendTo(outputFile));
+        System.out.println("Starting Spark job");
         Process proc= procBuilder.start(); 
         proc.waitFor();
         System.out.println("Job complete, now concatenating files");
-        System.out.println("pathHDFSTmp= " + pathHDFSTmp);
         // now concatenate all files into a single file on HDFS
-        hdfsUtils.concat(pathOutputData, pathHDFSTmp + "/output", new SparkOutputFileNameFilter());
+        hdfsUtils.concat(pathOutputData, pathOutputTmp, new SparkOutputFileNameFilter());
         
     }
     

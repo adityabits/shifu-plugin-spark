@@ -9,6 +9,7 @@
 
 package ml.shifu.plugin.spark;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,10 +23,12 @@ public class Normalize implements Function<String, String> {
 	private String delimiter= ",";
 	// TODO: get this from bVar
 	private Broadcast<BroadcastVariables> broadVar;
+	private String pattern;
  
         public Normalize(Broadcast<BroadcastVariables> bVar) {
     	//this.bVar= bVar.value();
     	this.broadVar= bVar;
+    	pattern= "%." + bVar.value().getPrecision() + "f";
 	}
 
 
@@ -36,8 +39,20 @@ public class Normalize implements Function<String, String> {
         Map<String, Object> rawDataMap= CombinedUtils.createDataMap(broadVar.value().getDataFields(), parsedInput);
         List<Object> result= broadVar.value().getExec().transform(broadVar.value().getTargetFields(), rawDataMap);
         result.addAll(broadVar.value().getExec().transform(broadVar.value().getActiveFields(), rawDataMap));
-        return Joiner.on(delimiter).join(result);
+        List<String> resultStr= new ArrayList<String>();
+        for(Object r: result) {
+        	if(r instanceof Float || r instanceof Double) {
+        		System.out.println("original- " + r);
+        		System.out.println("pattern= " + pattern);
+        		resultStr.add(String.format(pattern,  r));
+        		System.out.println("new str- " + String.format(pattern, r));
+        		//resultStr.add(r.toString());
+        	}
+        	else
+        		resultStr.add(r.toString());
+        }
         
+        return Joiner.on(delimiter).join(resultStr);
     }
 }
 

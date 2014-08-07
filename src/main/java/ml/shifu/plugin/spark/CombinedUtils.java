@@ -34,10 +34,6 @@ import com.google.common.base.Splitter;
 
 public class CombinedUtils {
 
-	public CombinedUtils() {
-		// TODO Auto-generated constructor stub
-	}
-	
 	public static List<DerivedField> getActiveFields(PMML pmml, Params params) {
         Model model= PMMLUtils.getModelByName(pmml, params.get("modelName").toString());
 		Map<FieldUsageType, List<DerivedField>> fieldMap= PMMLUtils.getDerivedFieldsByUsageType(pmml, model);
@@ -52,6 +48,7 @@ public class CombinedUtils {
         return targetFields;
 	}
 	
+	// TODO: include functionality for having HDFS pathOutputActiveHeaders
 	public static void writeTransformationHeader(String pathOutputActiveHeader, List<DerivedField> activeFields, List<DerivedField> targetFields) {
 		PrintWriter headerWriter= null;
 		try {
