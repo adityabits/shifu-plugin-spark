@@ -5,10 +5,6 @@
 package ml.shifu.plugin.spark;
 
 import org.apache.spark.serializer.KryoRegistrator;
-import org.dmg.pmml.DataField;
-import org.dmg.pmml.DerivedField;
-import org.dmg.pmml.PMML;
-
 import com.esotericsoftware.kryo.Kryo;
 
 public class MyRegistrator implements KryoRegistrator {

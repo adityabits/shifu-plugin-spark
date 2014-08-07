@@ -25,7 +25,6 @@ import ml.shifu.core.util.JSONUtils;
 import java.net.URI;
 import java.util.List;
 
-import org.apache.spark.serializer.KryoSerializer;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;

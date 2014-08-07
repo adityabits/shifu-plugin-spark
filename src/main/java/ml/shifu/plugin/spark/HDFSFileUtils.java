@@ -33,13 +33,15 @@ public class HDFSFileUtils {
 		}
 		System.out.println("hdfs filesystem= " + this.hdfs.toString());
 		System.out.println("reading hdfs conf from " + coreSitePath.toString() + ", " + hdfsSitePath.toString());
-
+		/*
+		 * This step gives a "no filesystem found for scheme: hdfs" when run through shifu. 
 		FileSystem localFS= FileSystem.get(new Configuration());
 		if(localFS.exists(coreSitePath) && localFS.exists(hdfsSitePath))
 			System.out.println("Both paths exist!!!");
 		else
 			System.out.println("At least one path not found");
 		localFS.close();
+		*/
 	}
 	
 	public void concat(Path trg, Path[] src) {

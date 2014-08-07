@@ -34,7 +34,6 @@ import java.lang.ProcessBuilder;
 import java.lang.ProcessBuilder.Redirect;
 import java.lang.Process;
 
-import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 
 public class SparkModelTransformRequestProcessor implements RequestProcessor {
