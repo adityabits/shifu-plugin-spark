@@ -22,14 +22,16 @@ public class BroadcastVariables {
 	private List<DerivedField> activeFields;
 	private List<DerivedField> targetFields;
 	private String precision;
+	private String delimiter;
 
-	public BroadcastVariables(DefaultTransformationExecutor executor, PMML pmml, List<DataField> dataFields, List<DerivedField> activeFields, List<DerivedField> targetFields, String precision) {
+	public BroadcastVariables(DefaultTransformationExecutor executor, PMML pmml, List<DataField> dataFields, List<DerivedField> activeFields, List<DerivedField> targetFields, String precision, String delimiter) {
 		this.exec= executor;
 		this.pmml= pmml;
 		this.dataFields= dataFields;
 		this.activeFields= activeFields;
 		this.targetFields= targetFields;
 		this.precision= precision;
+		this.delimiter= delimiter;
 	}
 
 	public PMML getPmml() {
@@ -54,6 +56,10 @@ public class BroadcastVariables {
 
 	public String getPrecision() {
 		return this.precision;
+	}
+	
+	public String getDelimiter() {
+		return this.delimiter;
 	}
 
 }

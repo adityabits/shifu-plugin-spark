@@ -60,6 +60,7 @@ public class SparkNormalizer {
         // TODO: Convert pathHDFSTmp to full hdfs path
         String pathHDFSTmp= (String) params.get("pathHDFSTmp", "ml/shifu/plugin/spark/tmp");
         String precision= (String) params.get("precision", "3");
+        String delimiter= (String) params.get("delimiter", ",");
         String appName= (String)params.get("SparkAppName", "spark-norm");
         String yarnMode= (String)params.get("yarnMode", "yarn-client");
         
@@ -80,7 +81,7 @@ public class SparkNormalizer {
         List<DerivedField> activeFields= CombinedUtils.getActiveFields(pmml, params);
         List<DerivedField> targetFields= CombinedUtils.getTargetFields(pmml, params);
         
-        Broadcast<BroadcastVariables> bVar= jsc.broadcast(new BroadcastVariables(executor, pmml, pmml.getDataDictionary().getDataFields(), activeFields, targetFields, precision));
+        Broadcast<BroadcastVariables> bVar= jsc.broadcast(new BroadcastVariables(executor, pmml, pmml.getDataDictionary().getDataFields(), activeFields, targetFields, precision, delimiter));
         
         JavaRDD<String> raw= jsc.textFile(pathHDFSInputData);
     	JavaRDD<String> normalized= raw.map(new Normalize(bVar));

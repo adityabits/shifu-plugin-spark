@@ -21,7 +21,8 @@
  * 	8. Path to hadoop configuration files: local
  * 	9. model name in PMML file
  * 	10. Spark home- for implementing the sparkHome/bin/spark-submit script
- * 	11. precision- for the Float fields in the normalized data file
+ * 	11. precision- for the Float fields in the normalized data file (default value 3)
+ * 	12. delimiter- data delimiter (default value ",")
  *	
  *	Note: 	1, 2, 3, 4 can be local/HDFS. Will be assumed to be local in absence of "hdfs:" scheme
  *	 		5 will be assumed to be HDFS path. "file:" scheme is invalid for this path.
