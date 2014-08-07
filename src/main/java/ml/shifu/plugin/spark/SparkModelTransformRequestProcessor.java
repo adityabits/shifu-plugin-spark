@@ -96,6 +96,9 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         // now concatenate all files into a single file on HDFS
         hdfsUtils.concat(pathOutputData, pathOutputTmp, new SparkOutputFileNameFilter());
         
+        // delete the tmp directory
+        hdfsUtils.delete(new Path(pathHDFSTmp));
+        
     }
     
 }

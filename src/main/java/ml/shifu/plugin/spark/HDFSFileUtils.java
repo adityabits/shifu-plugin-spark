@@ -146,11 +146,7 @@ public class HDFSFileUtils {
     	Path targetPath= new Path(target);
     	FileSystem targetFS= targetPath.getFileSystem(this.hdfsConf);
     	FileSystem hdfs= FileSystem.get(this.hdfsConf);
-    	System.out.println("Target path " + target);
-    	System.out.println("Dirpath path " + dirpath);
-    	
     	targetFS.delete(targetPath, false);
-		System.out.println("target FS- " + targetFS.toString());
 		FileUtil.copyMerge(hdfs, new Path(dirpath), targetFS, new Path(target), true, this.hdfsConf, "");
 
 		targetFS.close();  
