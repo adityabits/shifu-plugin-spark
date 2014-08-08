@@ -41,9 +41,10 @@ import com.google.inject.Injector;
 public class SparkNormalizer {
     public static void main(String[] args) throws Exception
     {
-    	// argument 1: HDFS Uri
-        // argument 2: HDFS path to request.json
-        // argument 3: HDFS path to PMML model.xml
+    	// argument 1: HDFS root Uri
+    	// argument 2: HDFS path to input data file
+        // argument 3: HDFS path to request.json
+        // argument 4: HDFS path to PMML model.xml
         String hdfsUri= args[0];
         String pathHDFSInputData= args[1];
     	String pathHDFSPmml= args[2];

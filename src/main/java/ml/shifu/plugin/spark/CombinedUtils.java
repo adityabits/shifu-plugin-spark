@@ -34,6 +34,7 @@ import com.google.common.base.Splitter;
 
 public class CombinedUtils {
 
+	// take PMML object and modelname (from params) and create list of active fields
 	public static List<DerivedField> getActiveFields(PMML pmml, Params params) {
         Model model= PMMLUtils.getModelByName(pmml, params.get("modelName").toString());
 		Map<FieldUsageType, List<DerivedField>> fieldMap= PMMLUtils.getDerivedFieldsByUsageType(pmml, model);
@@ -41,6 +42,7 @@ public class CombinedUtils {
         return activeFields;
 	}
 	
+	// take PMML object and modelname (from params) and create list of target fields
 	public static List<DerivedField> getTargetFields(PMML pmml, Params params) {
         Model model= PMMLUtils.getModelByName(pmml, params.get("modelName").toString());
 		Map<FieldUsageType, List<DerivedField>> fieldMap= PMMLUtils.getDerivedFieldsByUsageType(pmml, model);
@@ -49,6 +51,7 @@ public class CombinedUtils {
 	}
 	
 	// TODO: include functionality for having HDFS pathOutputActiveHeaders
+	// write output file header to local FS 
 	public static void writeTransformationHeader(String pathOutputActiveHeader, List<DerivedField> activeFields, List<DerivedField> targetFields) {
 		PrintWriter headerWriter= null;
 		try {
@@ -70,6 +73,7 @@ public class CombinedUtils {
 	}
             
 	// Should go into PMMLUtils
+	// load PMML from any filesystem given the path string and filesystem 
 	public static PMML loadPMML(String pathPMML, FileSystem fs) throws IOException {
 		// load PMML from any fs- local or hdfs
 		InputStream pmmlInputStream= null;
@@ -88,6 +92,8 @@ public class CombinedUtils {
 		return pmml;
 	}
 
+	// create data map from list of datafields and objects, suitable to be passed 
+	// as input to TransformExecutor.transform()
 	public static Map<String, Object> createDataMap(List<DataField> dataFields,
 			List<Object> parsedInput) {
         Map<String, Object> rawDataMap= new HashMap<String, Object>();
@@ -97,6 +103,7 @@ public class CombinedUtils {
 		return rawDataMap;
 	}
 
+	// take string and delimiter and parse into list of objects
 	public static List<Object> getParsedObjects(String input, String delimiter) {
         List<Object> parsedInput= new ArrayList<Object>();
         

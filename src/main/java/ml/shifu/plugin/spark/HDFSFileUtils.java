@@ -17,6 +17,9 @@ public class HDFSFileUtils {
 	
 	private Configuration hdfsConf;
 	
+	// Reads core-site.xml and hdfs-site.xml from provided hadoopConfPath and creates a Configuration object
+	// that is used to create instance of HDFS FileSystem.
+	// FileSystem instance is created whenever required and then closed to avoid hoarding of resource.
 	HDFSFileUtils(String hadoopConfPath) throws IOException {
 		this.hdfsConf = new Configuration();
 		// TODO: use a path joiner(?)
@@ -41,6 +44,7 @@ public class HDFSFileUtils {
 			hdfs.close();
 	}
 	
+	/*
 	public void concat(Path trg, Path[] src) throws IOException {
 		FileSystem hdfs= null;
 		try {
@@ -49,13 +53,18 @@ public class HDFSFileUtils {
 		} catch (IOException e) {
 			System.out.println("Failed to concatenate paths to " + trg.toString());
 			e.printStackTrace();
+		} finally {
+			if(hdfs != null)
+				hdfs.close();
 		}
-		hdfs.close();
+		
 	}
+	*/
 
-	public boolean delete(Path p) {
+	// deletes files from either local/ hdfs filesystems	
+	public boolean delete(String strPath) {
+		Path p= new Path(strPath);
 		System.out.println("Deleting file " + p.toString());
-		// deletes files from either local/ hdfs filesystems
 		FileSystem fs= null;
 		try {
 			fs= p.getFileSystem(this.hdfsConf);
@@ -79,13 +88,15 @@ public class HDFSFileUtils {
 		return true;
 	}
 	
-	public String getURI() throws IOException {
+	// gets full URI of file on HDFS
+	public String getHDFSUri() throws IOException {
 		FileSystem hdfs= FileSystem.get(this.hdfsConf);
 		String Uri= hdfs.getUri().toString();
 		hdfs.close();
 		return Uri;
 	}
     
+	
     public String uploadToHDFS(String localPath, String HDFSDir) throws Exception {
         FileSystem fs= FileSystem.get(this.hdfsConf);
         String basename= new Path(localPath).getName().toString(); 
@@ -95,39 +106,42 @@ public class HDFSFileUtils {
         return HDFSPath.toString();
     }
 
+    // uploads localPath to HDFSDir if localPath is on the local filesystem, and returns path of 
+    // file on HDFS. Treats localPath as local if no scheme is specified.
     public String uploadToHDFSIfLocal(String localPath, String HDFSDir) throws Exception {
-    	// TODO: better way?
     	if(localPath.startsWith("hdfs:"))
     		return localPath;
         String basename= new Path(localPath).getName().toString(); 
     	System.out.println("Uploading " + basename + " to HDFS");
         Path HDFSPath= new Path(HDFSDir + "/" + basename);
-        // TODO: use a path joiner (?)
         FileSystem hdfs= FileSystem.get(this.hdfsConf);
         hdfs.copyFromLocalFile(new Path(localPath), HDFSPath);
         hdfs.close();
         return relativeToFullHDFSPath(HDFSPath.toString());
     }
     
-    public String getHomeDir() throws IOException {
+    // gets home dir of HDFS filesystem
+    public String getHDFSHomeDir() throws IOException {
     	FileSystem hdfs= FileSystem.get(this.hdfsConf);
     	String homeDir= hdfs.getHomeDirectory().toString();
     	hdfs.close();
     	return homeDir;
     }
+    
     public String relativeToFullHDFSPath(String relPath) throws IOException {
     	if(relPath.startsWith("hdfs:") || relPath.startsWith("file:"))
     		return relPath;
     	if(relPath.startsWith("/")) {
     		// relPath relative to root
-    		return this.getURI() + relPath;
+    		return this.getHDFSUri() + relPath;
     	}
     	else {
     		// assume that path is relative to home
-    		return this.getHomeDir() + "/" + relPath;
+    		return this.getHDFSHomeDir() + "/" + relPath;
     	}
     }
     
+    /*
     public boolean deleteFile(String pathStr) {
     	
     	Path path= new Path(pathStr);
@@ -140,7 +154,10 @@ public class HDFSFileUtils {
 		}
     	return retValue;
     }
+    */
     
+    // concatenates all files in dirpath to target. Currently does not use PathFilter.
+    // However, all extraneous files created in output path by Spark are empty, so filter not necessary.
     public void concat(String target, String dirpath, PathFilter filter) throws IllegalArgumentException, IOException {
     	// now concatenate
     	Path targetPath= new Path(target);
@@ -148,9 +165,14 @@ public class HDFSFileUtils {
     	FileSystem hdfs= FileSystem.get(this.hdfsConf);
     	targetFS.delete(targetPath, false);
 		FileUtil.copyMerge(hdfs, new Path(dirpath), targetFS, new Path(target), true, this.hdfsConf, "");
-
+		
 		targetFS.close();  
 		hdfs.close();
     }
     
+    public void createEmptyFile(String strPath) throws IOException {
+    	Path path= new Path(strPath);
+    	FileSystem fs= path.getFileSystem(this.hdfsConf);
+    	fs.create(path);
+    }
 }

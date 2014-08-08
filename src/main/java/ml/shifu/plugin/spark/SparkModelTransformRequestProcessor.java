@@ -51,6 +51,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
 
 
     public void exec(Request req) throws Exception {
+    	// unpack all parameters from request object
         Params params= req.getProcessor().getParams();
         String pathPMML= (String) params.get("pathPMML", "model.xml");
         String pathRequest= (String) params.get("pathRequest", "request.xml");
@@ -65,10 +66,12 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         
         HDFSFileUtils hdfsUtils= new HDFSFileUtils(pathHadoopConf);
         pathHDFSTmp= hdfsUtils.relativeToFullHDFSPath(pathHDFSTmp);
+        // accept spark's output in HDFS_temp_directory/output before concatenating files to final output path.
         String pathOutputTmp= pathHDFSTmp + "/output";
+        
         // delete output file and hdfs tmp file's output folder
-        hdfsUtils.delete(new Path(pathOutputData));
-        hdfsUtils.delete(new Path(pathOutputTmp));
+        hdfsUtils.delete(pathOutputData);
+        hdfsUtils.delete(pathOutputTmp);
         
         // upload PMML.xml, Request.json and input data to HDFS if on local FScs
         String pathHDFSPmml= hdfsUtils.uploadToHDFSIfLocal(pathPMML, pathHDFSTmp);
@@ -77,7 +80,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         String pathHDFSInput= hdfsUtils.uploadToHDFSIfLocal(pathInputData, pathHDFSTmp);
         long afterInputUpload= new Date().getTime();
         
-        String hdfsUri= hdfsUtils.getURI();
+        String hdfsUri= hdfsUtils.getHDFSUri();
         
         PMML pmml= PMMLUtils.loadPMML(pathPMML);
 		List<DerivedField> activeFields= CombinedUtils.getActiveFields(pmml, params);
@@ -89,8 +92,8 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         System.out.println( Spark_submit);
         ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.plugin.spark.SparkNormalizer", pathToJar, hdfsUri, pathHDFSInput, pathHDFSPmml, pathHDFSRequest);
         procBuilder.redirectErrorStream(true);
-        File outputFile= new File("log");
-        procBuilder.redirectOutput(Redirect.appendTo(outputFile));
+        //File outputFile= new File("log");
+        procBuilder.redirectOutput(Redirect.INHERIT);
         System.out.println("Starting Spark job");
         long beforeSparkJob= new Date().getTime();
         Process proc= procBuilder.start(); 
@@ -102,13 +105,8 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         hdfsUtils.concat(pathOutputData, pathOutputTmp, new SparkOutputFileNameFilter());
         long afterConcat= new Date().getTime();
         // delete the tmp directory
-        hdfsUtils.delete(new Path(pathHDFSTmp));
-        /*
-        System.out.println("afterInputUpload " + afterInputUpload);
-        System.out.println("before " + beforeInputUpload);
-        System.out.println("afterInputUpload " + afterSparkJob);
-        System.out.println("before " + beforeSparkJob);
-        */
+        hdfsUtils.delete(pathHDFSTmp);
+
         System.out.println("Time taken for input upload: " + ((float)(afterInputUpload - beforeInputUpload))/1000);
         System.out.println("Time taken for spark job: " + ((float)(afterSparkJob - beforeSparkJob))/1000);
         System.out.println("Time taken for concatenation: " + ((float)(afterConcat - beforeConcat))/1000);

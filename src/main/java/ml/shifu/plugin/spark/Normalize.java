@@ -27,6 +27,7 @@ public class Normalize implements Function<String, String> {
         public Normalize(Broadcast<BroadcastVariables> bVar) {
     	//this.bVar= bVar.value();
     	this.broadVar= bVar;
+    	// create pattern to be used for printing out normalized floats/ doubles based on precision
     	pattern= "%." + bVar.value().getPrecision() + "f";
 	}
 
@@ -39,6 +40,8 @@ public class Normalize implements Function<String, String> {
         List<Object> result= broadVar.value().getExec().transform(broadVar.value().getTargetFields(), rawDataMap);
         result.addAll(broadVar.value().getExec().transform(broadVar.value().getActiveFields(), rawDataMap));
         List<String> resultStr= new ArrayList<String>();
+        
+        // if object is float/ double apply pattern before joining
         for(Object r: result) {
         	if(r instanceof Float || r instanceof Double) {
         		resultStr.add(String.format(pattern,  r));
