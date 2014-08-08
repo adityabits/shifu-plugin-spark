@@ -39,6 +39,7 @@ import ml.shifu.core.util.PMMLUtils;
 import ml.shifu.core.util.Params;
 
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 import java.lang.ProcessBuilder;
 import java.lang.ProcessBuilder.Redirect;
@@ -69,11 +70,12 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         hdfsUtils.delete(new Path(pathOutputData));
         hdfsUtils.delete(new Path(pathOutputTmp));
         
-        
         // upload PMML.xml, Request.json and input data to HDFS if on local FScs
         String pathHDFSPmml= hdfsUtils.uploadToHDFSIfLocal(pathPMML, pathHDFSTmp);
         String pathHDFSRequest= hdfsUtils.uploadToHDFSIfLocal(pathRequest, pathHDFSTmp);
+        long beforeInputUpload= new Date().getTime();
         String pathHDFSInput= hdfsUtils.uploadToHDFSIfLocal(pathInputData, pathHDFSTmp);
+        long afterInputUpload= new Date().getTime();
         
         String hdfsUri= hdfsUtils.getURI();
         
@@ -90,14 +92,26 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         File outputFile= new File("log");
         procBuilder.redirectOutput(Redirect.appendTo(outputFile));
         System.out.println("Starting Spark job");
+        long beforeSparkJob= new Date().getTime();
         Process proc= procBuilder.start(); 
         proc.waitFor();
+        long afterSparkJob= new Date().getTime();
         System.out.println("Job complete, now concatenating files");
-        // now concatenate all files into a single file on HDFS
+        // now concatenate all files into a single file
+        long beforeConcat= new Date().getTime();
         hdfsUtils.concat(pathOutputData, pathOutputTmp, new SparkOutputFileNameFilter());
-        
+        long afterConcat= new Date().getTime();
         // delete the tmp directory
         hdfsUtils.delete(new Path(pathHDFSTmp));
+        /*
+        System.out.println("afterInputUpload " + afterInputUpload);
+        System.out.println("before " + beforeInputUpload);
+        System.out.println("afterInputUpload " + afterSparkJob);
+        System.out.println("before " + beforeSparkJob);
+        */
+        System.out.println("Time taken for input upload: " + ((float)(afterInputUpload - beforeInputUpload))/1000);
+        System.out.println("Time taken for spark job: " + ((float)(afterSparkJob - beforeSparkJob))/1000);
+        System.out.println("Time taken for concatenation: " + ((float)(afterConcat - beforeConcat))/1000);
         
     }
     
