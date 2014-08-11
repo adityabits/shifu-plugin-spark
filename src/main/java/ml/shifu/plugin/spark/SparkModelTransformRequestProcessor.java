@@ -63,6 +63,15 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         String pathOutputData= params.get("pathOutputData").toString();
         // the files created in pathHDFSTmp/output are concatenated in pathOutputData to create final output file
         String pathInputData= params.get("pathInputData").toString();
+        // get spark options
+        String sparkMode= (String)params.get("sparkMode", "yarn-cluster");
+        String sparkNumExecutors= (String) params.get("sparkNumExecutors", "2");
+        String sparkExecutorMemory= (String) params.get("sparkExecutorMemory", "512m");
+        String sparkDriverMemory= (String) params.get("sparkDriverMemory", "512m");
+        String sparkExecutorCores= (String) params.get("sparkExecutorCores", "1");
+        
+        
+        
         
         HDFSFileUtils hdfsUtils= new HDFSFileUtils(pathHadoopConf);
         pathHDFSTmp= hdfsUtils.relativeToFullHDFSPath(pathHDFSTmp);
@@ -89,7 +98,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         
         // call spark-submit
         String Spark_submit= (String) params.get("SparkHome") + "/bin/spark-submit";
-        ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.plugin.spark.SparkNormalizer", "--master", "yarn-cluster", "--driver-memory", "512m", "--executor-memory",  "2000m", "--num-executors", "7", "--executor-cores", "2", pathToJar, hdfsUri, pathHDFSInput, pathHDFSPmml, pathHDFSRequest);
+        ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.plugin.spark.SparkNormalizer", "--master", sparkMode, "--driver-memory", sparkDriverMemory, "--executor-memory",  sparkExecutorMemory, "--num-executors", sparkNumExecutors, "--executor-cores", sparkExecutorCores, pathToJar, hdfsUri, pathHDFSInput, pathHDFSPmml, pathHDFSRequest);
         procBuilder.redirectErrorStream(true);
         //File outputFile= new File("log");
         procBuilder.redirectOutput(Redirect.INHERIT);

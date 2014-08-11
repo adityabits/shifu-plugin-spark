@@ -3,12 +3,12 @@
     "description": "step 5, execute transformations",
     "processor": {
         "spi": "RequestProcessor",
-        "impl": "ml.shifu.core.di.builtin.processor.SparkModelTransformRequestProcessor",
+        "impl": "ml.shifu.plugin.spark.SparkModelTransformRequestProcessor",
         "params": {
             "modelName": "demoModel",
             "pathPMML": "./src/test/resources/model.xml",
-            "pathInputData": "hdfs:///user/apalnitkar/datasets/1g_data",
-            "pathOutputData": "hdfs:///user/apalnitkar/output/1g_data",
+            "pathInputData": "./src/test/resources/data/wdbc.train",
+            "pathOutputData": "./src/test/resources/generated/normalized.txt",
             "pathHDFSTmp":"ml/shifu/norm/tmp",
             "pathHadoopConf":"/usr/local/hadoop/etc/hadoop",
             "pathOutputActiveHeader": "./src/test/resources/generated/normalized_header.txt",

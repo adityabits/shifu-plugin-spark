@@ -23,10 +23,11 @@ public class Normalize implements Function<String, String> {
 	// TODO: get this from bVar
 	private Broadcast<BroadcastVariables> broadVar;
 	private String pattern;
- 
-        public Normalize(Broadcast<BroadcastVariables> bVar) {
+
+	public Normalize(Broadcast<BroadcastVariables> bVar) {
     	//this.bVar= bVar.value();
     	this.broadVar= bVar;
+    	//this.bvar= bVar.value();
     	// create pattern to be used for printing out normalized floats/ doubles based on precision
     	pattern= "%." + bVar.value().getPrecision() + "f";
 	}
@@ -35,9 +36,10 @@ public class Normalize implements Function<String, String> {
 	@Override
     public String call(String input) {
 		
-		List<Object> parsedInput= CombinedUtils.getParsedObjects(input, broadVar.value().getDelimiter());
-        Map<String, Object> rawDataMap= CombinedUtils.createDataMap(broadVar.value().getDataFields(), parsedInput);
-        List<Object> result= broadVar.value().getExec().transform(broadVar.value().getTargetFields(), rawDataMap);
+		//List<Object> parsedInput= CombinedUtils.getParsedObjects(input, bvar.getDelimiter());
+        //Map<String, Object> rawDataMap= CombinedUtils.createDataMap(bvar.getDataFields(), parsedInput);
+        Map<String, Object> rawDataMap= CombinedUtils.createDataMap(broadVar.value().getDataFields(), input, broadVar.value().getDelimiter());
+		List<Object> result= broadVar.value().getExec().transform(broadVar.value().getTargetFields(), rawDataMap);
         result.addAll(broadVar.value().getExec().transform(broadVar.value().getActiveFields(), rawDataMap));
         List<String> resultStr= new ArrayList<String>();
         

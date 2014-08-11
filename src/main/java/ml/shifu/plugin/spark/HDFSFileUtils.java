@@ -17,6 +17,7 @@ public class HDFSFileUtils {
 	
 	private Configuration hdfsConf;
 	
+	
 	// Reads core-site.xml and hdfs-site.xml from provided hadoopConfPath and creates a Configuration object
 	// that is used to create instance of HDFS FileSystem.
 	// FileSystem instance is created whenever required and then closed to avoid hoarding of resource.

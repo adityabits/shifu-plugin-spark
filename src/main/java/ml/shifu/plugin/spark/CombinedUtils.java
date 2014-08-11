@@ -113,5 +113,15 @@ public class CombinedUtils {
         }
         return parsedInput;
 	}
+	
+	public static Map<String, Object> createDataMap(List<DataField> dataFields, String input, String delimiter) {
+		Map<String, Object> rawDataMap= new HashMap<String, Object>();
+		int index=0;
+		for(String s: Splitter.on(delimiter).split(input)) {
+			rawDataMap.put(dataFields.get(index).getName().getValue(), s);
+			index++;
+		}
+		return rawDataMap;
+	}
 
 }
