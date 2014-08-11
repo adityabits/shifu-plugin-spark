@@ -63,7 +63,7 @@ public class SparkNormalizer {
         String precision= (String) params.get("precision", "3");
         String delimiter= (String) params.get("delimiter", ",");
         String appName= (String)params.get("SparkAppName", "spark-norm");
-        String yarnMode= (String)params.get("yarnMode", "yarn-client");
+        String yarnMode= (String)params.get("yarnMode", "yarn-cluster");
         
         // TODO: add interface TransformExecutor, use DI
         /*
@@ -75,7 +75,8 @@ public class SparkNormalizer {
 		*/
         DefaultTransformationExecutor executor= new DefaultTransformationExecutor();
         
-        SparkConf conf= new SparkConf().setAppName(appName).setMaster(yarnMode);
+        //SparkConf conf= new SparkConf().setAppName(appName).setMaster(yarnMode);
+        SparkConf conf= new SparkConf().setAppName(appName);
         conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         conf.set("spark.kyro.Registrator", "ml.shifu.norm.MyRegistrator");
         JavaSparkContext jsc= new JavaSparkContext(conf);

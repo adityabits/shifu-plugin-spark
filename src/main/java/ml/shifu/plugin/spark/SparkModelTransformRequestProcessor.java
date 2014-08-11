@@ -89,8 +89,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         
         // call spark-submit
         String Spark_submit= (String) params.get("SparkHome") + "/bin/spark-submit";
-        System.out.println( Spark_submit);
-        ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.plugin.spark.SparkNormalizer", pathToJar, hdfsUri, pathHDFSInput, pathHDFSPmml, pathHDFSRequest);
+        ProcessBuilder procBuilder= new ProcessBuilder(Spark_submit, "--class", "ml.shifu.plugin.spark.SparkNormalizer", "--master", "yarn-cluster", "--driver-memory", "512m", "--executor-memory",  "2000m", "--num-executors", "7", "--executor-cores", "2", pathToJar, hdfsUri, pathHDFSInput, pathHDFSPmml, pathHDFSRequest);
         procBuilder.redirectErrorStream(true);
         //File outputFile= new File("log");
         procBuilder.redirectOutput(Redirect.INHERIT);
@@ -102,10 +101,10 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         System.out.println("Job complete, now concatenating files");
         // now concatenate all files into a single file
         long beforeConcat= new Date().getTime();
-        hdfsUtils.concat(pathOutputData, pathOutputTmp, new SparkOutputFileNameFilter());
+        //hdfsUtils.concat(pathOutputData, pathOutputTmp, new SparkOutputFileNameFilter());
         long afterConcat= new Date().getTime();
         // delete the tmp directory
-        hdfsUtils.delete(pathHDFSTmp);
+        //hdfsUtils.delete(pathHDFSTmp);
 
         System.out.println("Time taken for input upload: " + ((float)(afterInputUpload - beforeInputUpload))/1000);
         System.out.println("Time taken for spark job: " + ((float)(afterSparkJob - beforeSparkJob))/1000);
