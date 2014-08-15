@@ -1,10 +1,12 @@
 package ml.shifu.plugin.spark;
 import java.io.File;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
 import ml.shifu.core.request.Request;
 import ml.shifu.core.util.JSONUtils;
-import ml.shifu.plugin.spark.SparkModelTransformRequestProcessor;
+import ml.shifu.plugin.spark.norm.SparkModelTransformRequestProcessor;
 
 
 public class SparkModelTransformRequestProcessorTest {
