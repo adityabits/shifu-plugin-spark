@@ -114,7 +114,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         String Spark_submit = (String) params.get("SparkHome")
                 + "/bin/spark-submit";
         ProcessBuilder procBuilder = new ProcessBuilder(Spark_submit,
-                "--class", "ml.shifu.plugin.spark.SparkNormalizer", "--master",
+                "--class", "ml.shifu.plugin.spark.norm.SparkNormalizer", "--master",
                 sparkMode, "--driver-memory", sparkDriverMemory,
                 "--executor-memory", sparkExecutorMemory, "--num-executors",
                 sparkNumExecutors, "--executor-cores", sparkExecutorCores,

@@ -3,7 +3,7 @@
     "description": "step 5, execute transformations",
     "processor": {
         "spi": "RequestProcessor",
-        "impl": "ml.shifu.plugin.spark.SparkModelTransformRequestProcessor",
+        "impl": "ml.shifu.plugin.spark.norm.SparkModelTransformRequestProcessor",
         "params": {
             "modelName": "demoModel",
             "pathPMML": "./src/test/resources/model.xml",

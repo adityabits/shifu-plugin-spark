@@ -1,4 +1,4 @@
-package ml.shifu.plugin.spark;
+package ml.shifu.plugin.spark.norm;
 import java.io.File;
 
 import org.testng.Assert;
