@@ -59,8 +59,12 @@ public class SparkNormalizer {
         Params params = req.getProcessor().getParams();
 
         // TODO: Convert pathHDFSTmp to full hdfs path
+
         String pathHDFSTmp = (String) params.get("pathHDFSTmp",
-                "ml/shifu/plugin/spark/tmp");
+                "hdfs://ml/shifu/plugin/spark/tmp");
+        System.out.println("pathHDFSTmp= " + pathHDFSTmp);
+        HDFSFileUtils hdfsUtils= new HDFSFileUtils(new URI(hdfsUri));
+        pathHDFSTmp= hdfsUtils.relativeToFullHDFSPath(pathHDFSTmp);
         String precision = (String) params.get("precision", "3");
         String delimiter = (String) params.get("delimiter", ",");
         String appName = (String) params.get("SparkAppName", "spark-norm");
@@ -97,6 +101,7 @@ public class SparkNormalizer {
 
         // create the output in a pathHDFSTmp/output directory. The files will
         // be concatenated into a single file.
+        System.out.println("pathHDFSTmp= " + pathHDFSTmp);
         normalized.saveAsTextFile(pathHDFSTmp + "/" + "output");
 
     }

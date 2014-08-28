@@ -38,7 +38,6 @@
 
 package ml.shifu.plugin.spark.norm;
 
-import org.dmg.pmml.*;
 
 import ml.shifu.core.di.spi.RequestProcessor;
 import ml.shifu.core.request.Request;
@@ -50,6 +49,9 @@ import java.lang.ProcessBuilder;
 import java.lang.ProcessBuilder.Redirect;
 import java.lang.Process;
 
+import org.dmg.pmml.DerivedField;
+import org.dmg.pmml.PMML;
+
 
 public class SparkModelTransformRequestProcessor implements RequestProcessor {
 
@@ -59,7 +61,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         String pathPMML = (String) params.get("pathPMML", "model.xml");
         String pathRequest = (String) params.get("pathRequest", "request.xml");
         String pathHDFSTmp = (String) params.get("pathHDFSTmp",
-                "ml/shifu/norm/tmp");
+                "hdfs://ml/shifu/norm/tmp");
         // pathHDFSTmp contains the uploaded PMML and request files and the
         // output of the spark job
         String pathToJar = (String) params.get("pathToJar");
@@ -113,8 +115,9 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         // call spark-submit
         String Spark_submit = (String) params.get("SparkHome")
                 + "/bin/spark-submit";
+        System.out.println("path to jar= " + pathToJar);
         ProcessBuilder procBuilder = new ProcessBuilder(Spark_submit,
-                "--class", "ml.shifu.plugin.spark.norm.SparkNormalizer", "--master",
+                "--class", SparkNormalizer.class.getCanonicalName(), "--master",
                 sparkMode, "--driver-memory", sparkDriverMemory,
                 "--executor-memory", sparkExecutorMemory, "--num-executors",
                 sparkNumExecutors, "--executor-cores", sparkExecutorCores,
@@ -127,8 +130,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         proc.waitFor();
         System.out.println("Job complete, now concatenating files");
         // now concatenate all files into a single file
-        hdfsUtils.concat(pathOutputData, pathOutputTmp,
-                new SparkOutputFileNameFilter());
+        hdfsUtils.concat(pathOutputData, pathOutputTmp);
         // delete the tmp directory
         hdfsUtils.delete(pathHDFSTmp);
 
