@@ -25,6 +25,8 @@ import ml.shifu.core.request.Request;
 import ml.shifu.core.util.Params;
 import ml.shifu.core.util.JSONUtils;
 import ml.shifu.core.util.RequestUtils;
+import ml.shifu.plugin.spark.utils.CombinedUtils;
+import ml.shifu.plugin.spark.utils.HDFSFileUtils;
 
 import java.net.URI;
 import java.util.List;
@@ -61,10 +63,11 @@ public class SparkNormalizer {
         // TODO: Convert pathHDFSTmp to full hdfs path
 
         String pathHDFSTmp = (String) params.get("pathHDFSTmp",
-                "hdfs://ml/shifu/plugin/spark/tmp");
-        System.out.println("pathHDFSTmp= " + pathHDFSTmp);
+                "ml/shifu/plugin/spark/tmp");
+        
         HDFSFileUtils hdfsUtils= new HDFSFileUtils(new URI(hdfsUri));
         pathHDFSTmp= hdfsUtils.relativeToFullHDFSPath(pathHDFSTmp);
+        System.out.println("SparkNormalizer: " + pathHDFSTmp);
         String precision = (String) params.get("precision", "3");
         String delimiter = (String) params.get("delimiter", ",");
         String appName = (String) params.get("SparkAppName", "spark-norm");
@@ -101,7 +104,6 @@ public class SparkNormalizer {
 
         // create the output in a pathHDFSTmp/output directory. The files will
         // be concatenated into a single file.
-        System.out.println("pathHDFSTmp= " + pathHDFSTmp);
         normalized.saveAsTextFile(pathHDFSTmp + "/" + "output");
 
     }

@@ -1,4 +1,4 @@
-package ml.shifu.plugin.spark.norm;
+package ml.shifu.plugin.spark.utils;
 
 import java.io.IOException;
 import java.net.URI;
@@ -51,7 +51,6 @@ public class HDFSFileUtils {
             hdfs.close();
     }
 
-    
     public HDFSFileUtils(URI HDFSUri) throws IOException {
         this.hdfsConf= new Configuration();
         hdfsConf.set("fs.default.name", HDFSUri.toString());
@@ -129,11 +128,11 @@ public class HDFSFileUtils {
     public String uploadToHDFSIfLocal(String localPath, String HDFSDir)
             throws Exception {
         localPath= fullDefaultLocal(localPath);
-        HDFSDir= fullDefaultLocal(HDFSDir);
-        
-        if (isHDFS(localPath))
+        HDFSDir= relativeToFullHDFSPath(HDFSDir);
+        System.out.println("uploadToHDFS: " + localPath);
+        if (isHDFS(localPath)) 
             return localPath;
-        
+        System.out.println("Still here");
         String basename = new Path(localPath).getName().toString();
         System.out.println("Uploading " + basename + " to HDFS");
         Path HDFSPath = new Path(HDFSDir + "/" + basename);
@@ -185,11 +184,15 @@ public class HDFSFileUtils {
         if(relPath.startsWith("file:"))
             return relPath;
         else if (relPath.startsWith("hdfs:")) {
+            // assume path is full as we cannot verify presence/ absence of URI authority and port
+            return relPath;
+            /*
             // make sure path contains authority, port etc.
             URI uri= new URI(relPath);
             URI hdfsURI= new URI(getHDFSUri());
             URI fullURI= new URI(hdfsURI.getScheme(), hdfsURI.getAuthority(), uri.getPath(), null, null);
             return fullURI.toString();
+            */
         }
         if (relPath.startsWith("/")) {
             // relPath relative to root

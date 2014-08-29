@@ -43,6 +43,8 @@ import ml.shifu.core.di.spi.RequestProcessor;
 import ml.shifu.core.request.Request;
 import ml.shifu.core.util.PMMLUtils;
 import ml.shifu.core.util.Params;
+import ml.shifu.plugin.spark.utils.CombinedUtils;
+import ml.shifu.plugin.spark.utils.HDFSFileUtils;
 
 import java.util.List;
 import java.lang.ProcessBuilder;
@@ -61,7 +63,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         String pathPMML = (String) params.get("pathPMML", "model.xml");
         String pathRequest = (String) params.get("pathRequest", "request.xml");
         String pathHDFSTmp = (String) params.get("pathHDFSTmp",
-                "hdfs://ml/shifu/norm/tmp");
+                "ml/shifu/norm/tmp");
         // pathHDFSTmp contains the uploaded PMML and request files and the
         // output of the spark job
         String pathToJar = (String) params.get("pathToJar");
@@ -86,6 +88,7 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
 
         HDFSFileUtils hdfsUtils = new HDFSFileUtils(pathHadoopConf);
         pathHDFSTmp = hdfsUtils.relativeToFullHDFSPath(pathHDFSTmp);
+        System.out.println("Norm pathHDFSTmp= " + pathHDFSTmp);
         // accept spark's output in HDFS_temp_directory/output before
         // concatenating files to final output path.
         String pathOutputTmp = pathHDFSTmp + "/output";
