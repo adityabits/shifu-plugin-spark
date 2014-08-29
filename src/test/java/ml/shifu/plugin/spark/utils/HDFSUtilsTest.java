@@ -33,7 +33,6 @@ public class HDFSUtilsTest {
         // create a file in local filesystem
         File testFile= new File("src/test/resources/stats/HDFSTest/dummy");
         FileUtils.touch(testFile); 
-        System.out.println("local testfile: " + testFile.toURI().toString());
         hdfsUtils.delete(testFile.toURI().toString());
         Assert.assertFalse(hdfsUtils.exists(testFile.getPath()));
         FileUtils.deleteQuietly(testFile);
@@ -41,7 +40,6 @@ public class HDFSUtilsTest {
         // test on HDFS
         Path testPath= new Path(hdfsUtils.relativeToFullHDFSPath("ml/shifu/test/dummy"));
         FileSystem hdfs= FileSystem.get(hdfsUtils.getHDFSConf());
-        System.out.println("hdfs testfile: " + testPath.toString());
         hdfs.createNewFile(testPath);
         hdfs.close();
         hdfsUtils.delete(testPath.toString());

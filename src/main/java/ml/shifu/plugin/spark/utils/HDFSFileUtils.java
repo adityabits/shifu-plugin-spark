@@ -129,12 +129,9 @@ public class HDFSFileUtils {
             throws Exception {
         localPath= fullDefaultLocal(localPath);
         HDFSDir= relativeToFullHDFSPath(HDFSDir);
-        System.out.println("uploadToHDFS: " + localPath);
         if (isHDFS(localPath)) 
             return localPath;
-        System.out.println("Still here");
         String basename = new Path(localPath).getName().toString();
-        System.out.println("Uploading " + basename + " to HDFS");
         Path HDFSPath = new Path(HDFSDir + "/" + basename);
         FileSystem hdfs = FileSystem.get(this.hdfsConf);
         hdfs.copyFromLocalFile(new Path(localPath), HDFSPath);

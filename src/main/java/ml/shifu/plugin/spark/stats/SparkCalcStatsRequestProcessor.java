@@ -36,7 +36,6 @@ public class SparkCalcStatsRequestProcessor implements RequestProcessor{
         String pathHdfsRequest= hdfsUtils.uploadToHDFSIfLocal(pathRequest, pathHDFSTmp);
         String pathHdfsInput= hdfsUtils.uploadToHDFSIfLocal(pathInputData, pathHDFSTmp);
         String hdfsUri = hdfsUtils.getHDFSUri();
-        System.out.println("Path HDFS Input= " + pathHdfsInput);
         // construct spark-submit command
         String pathSparkSubmit= sparkHome + "/bin/spark-submit";
         ProcessBuilder procBuilder = new ProcessBuilder(pathSparkSubmit,
@@ -51,15 +50,12 @@ public class SparkCalcStatsRequestProcessor implements RequestProcessor{
         System.out.println("Starting Spark job");
         Process proc = procBuilder.start();
         proc.waitFor();
-        System.out.println("In Processor");
         
         // copy PMML to original pmml location
         String pathPMMLOutput= params.get("pathPMMLOutput", pathPMML).toString();
         hdfsUtils.copy(pathHdfsPmml, pathPMMLOutput);
-        System.out.println("In Processor, copying PMML");
         // delete the tmp directory
         hdfsUtils.delete(pathHDFSTmp);
-        System.out.println("In Processor, exiting");
         
 	}
 }

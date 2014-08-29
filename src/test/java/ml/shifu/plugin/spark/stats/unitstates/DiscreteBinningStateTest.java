@@ -61,7 +61,6 @@ public class DiscreteBinningStateTest {
     @Test
     public void testCategorySet() {
         Set<String> s= state.getCategorySet();
-        System.out.println(s.toString());
         Assert.assertEquals(s.size(), 2);
         Assert.assertTrue(s.contains("a"));
         Assert.assertTrue(s.contains("b"));

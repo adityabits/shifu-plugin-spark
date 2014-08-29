@@ -88,7 +88,6 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
 
         HDFSFileUtils hdfsUtils = new HDFSFileUtils(pathHadoopConf);
         pathHDFSTmp = hdfsUtils.relativeToFullHDFSPath(pathHDFSTmp);
-        System.out.println("Norm pathHDFSTmp= " + pathHDFSTmp);
         // accept spark's output in HDFS_temp_directory/output before
         // concatenating files to final output path.
         String pathOutputTmp = pathHDFSTmp + "/output";
@@ -118,7 +117,6 @@ public class SparkModelTransformRequestProcessor implements RequestProcessor {
         // call spark-submit
         String Spark_submit = (String) params.get("SparkHome")
                 + "/bin/spark-submit";
-        System.out.println("path to jar= " + pathToJar);
         ProcessBuilder procBuilder = new ProcessBuilder(Spark_submit,
                 "--class", SparkNormalizer.class.getCanonicalName(), "--master",
                 sparkMode, "--driver-memory", sparkDriverMemory,

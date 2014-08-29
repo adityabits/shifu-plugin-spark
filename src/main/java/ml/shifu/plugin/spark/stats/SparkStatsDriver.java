@@ -68,7 +68,6 @@ public class SparkStatsDriver {
 
         SimpleModule module = new SimpleModule();
         Binding statsCalculatorBinding = RequestUtils.getUniqueBinding(req, SparkStatsCalculator.class.getCanonicalName(), true);
-        System.out.println("Binding: " + statsCalculatorBinding);
         Params bindingParams= statsCalculatorBinding.getParams();
         module.set(statsCalculatorBinding);
         Injector injector = Guice.createInjector(module);
@@ -80,7 +79,6 @@ public class SparkStatsDriver {
         JavaRDD<String> data= jsc.textFile(pathHdfsInput);
         
         ModelStats modelStats= statsService.calculate(jsc, data, pmml, bindingParams);
-        System.out.println("Done");
         // store univariateStats in pmml and save in pathPMML
         Model model = PMMLUtils.getModelByName(pmml, (String) bindingParams.get("modelName"));
         model.setModelStats(modelStats);

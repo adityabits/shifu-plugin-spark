@@ -67,7 +67,6 @@ public class SparkNormalizer {
         
         HDFSFileUtils hdfsUtils= new HDFSFileUtils(new URI(hdfsUri));
         pathHDFSTmp= hdfsUtils.relativeToFullHDFSPath(pathHDFSTmp);
-        System.out.println("SparkNormalizer: " + pathHDFSTmp);
         String precision = (String) params.get("precision", "3");
         String delimiter = (String) params.get("delimiter", ",");
         String appName = (String) params.get("SparkAppName", "spark-norm");
