@@ -1,5 +1,9 @@
 target/**
 *.swp
 *.swo
-src/test/resources/generated/**
+src/test/resources/norm/generated/**
+src/test/resources/stats/generated/**
 /target/
+.classpath
+.project
+
